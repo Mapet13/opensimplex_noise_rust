@@ -3,5 +3,13 @@ name = "opensimplex_noise_rs"
 version = "0.1.0"
 authors = ["Mapet <jakubsordyl1@gmail.com>"]
 edition = "2018"
+readme = "README.md"
+repository = "https://github.com/Mapet13/opensimplex_noise_rust/"
+license-file = "LICENSE.txt"
+keywords = ["noise", "OpenSimplex"]
+categories = ["algorithms", "graphics", "rendering"]
+exclude = ["examples/"]
+description = "OpenSimplex noise algorithm implementation in Rust"
+homepage = "https://github.com/Mapet13/opensimplex_noise_rust/"
 
 [dependencies]
