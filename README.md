@@ -1,5 +1,7 @@
 # OpenSimplex noise in rust
-OpenSimplex noise algorithm implementation in Rust
+![crates.io](https://img.shields.io/crates/v/opensimplex_noise_rs.svg)
+#### OpenSimplex noise algorithm implementation in Rust
+
 
 Currently supports only 2d noise.
 
