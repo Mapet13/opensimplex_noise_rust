@@ -1,0 +1,17 @@
+[package]
+name = "visualization"
+version = "0.1.0"
+authors = ["Mapet <jakubsordyl1@gmail.com>"]
+edition = "2018"
+
+[[bin]]
+name = "program"
+path = "src/main.rs"
+
+[dependencies]
+sdl2 = { version = "0.34.1", features = ["bundled", "static-link"] }
+opensimplex_noise_rs = { path  = "../../" }
+rand = "0.7.3"
+image = "0.23.8"
+futures = "0.3"
+tokio = { version = "0.2.22", features = ["macros", "tcp", "dns", "io-util"] }
