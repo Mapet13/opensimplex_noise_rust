@@ -1,3 +1,3 @@
 OpenSimplex Noise 2d Visualization Example
 
-<img src="https://imgur.com/a/tpIGMA0">
+<img src="https://i.imgur.com/9DCGzJh.png"
