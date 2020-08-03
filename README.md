@@ -1,5 +1,6 @@
-# OpenSimplex noise in rust
-![crates.io](https://img.shields.io/crates/v/opensimplex_noise_rs.svg)
+# OpenSimplex noise in rust [![Crates.io][cr-badge]][cr]
+[cr-badge]: https://img.shields.io/crates/v/opensimplex_noise_rs.svg
+[cr]: https://crates.io/crates/opensimplex_noise_rs
 #### OpenSimplex noise algorithm implementation in Rust
 
 
