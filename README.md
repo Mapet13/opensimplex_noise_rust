@@ -1,7 +1,6 @@
 # OpenSimplex noise in rust [![Crates.io][cr-badge]][cr]
 [cr-badge]: https://img.shields.io/crates/v/opensimplex_noise_rs.svg
 [cr]: https://crates.io/crates/opensimplex_noise_rs
-#### OpenSimplex noise algorithm implementation in Rust
 [OpenSimplex noise](https://en.wikipedia.org/wiki/OpenSimplex_noise) is a random noise [algorithm by Kurt Spencer](https://uniblock.tumblr.com/post/97868843242/noise), made as a patent-free alternative to Perlin and Simplex noise.
 
 This Rust port currently supports only 2d noise.
