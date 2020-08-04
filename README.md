@@ -6,7 +6,7 @@
 Currently supports only 2d noise.
 
 ### Examples:
-<img src="https://i.imgur.com/9DCGzJh.png">
+[<img src="https://i.imgur.com/9DCGzJh.png">](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo/)
 
 ### Usage:
 ```rust
