@@ -20,6 +20,9 @@ let value = noise_generator.eval_2d(x * scale, y * scale); // generates value in
 [dependencies]
 opensimplex_noise_rs = "0.1.0"
 ```
+### Code Examples:
+ - [2D Demo](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo/)
+ - [Island Terrain Generator](https://github.com/Mapet13/terrain-generator-2d)
 
 ### License
 ###### This code is under the same "license" as Kurt's OpenSimplex - the public domain "unlicense."
