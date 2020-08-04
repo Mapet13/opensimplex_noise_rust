@@ -2,8 +2,9 @@
 [cr-badge]: https://img.shields.io/crates/v/opensimplex_noise_rs.svg
 [cr]: https://crates.io/crates/opensimplex_noise_rs
 #### OpenSimplex noise algorithm implementation in Rust
+[OpenSimplex noise](https://en.wikipedia.org/wiki/OpenSimplex_noise) is a random noise [algorithm by Kurt Spencer](https://uniblock.tumblr.com/post/97868843242/noise), made as a patent-free alternative to Perlin and Simplex noise.
 
-Currently supports only 2d noise.
+This Rust port currently supports only 2d noise.
 
 ### Examples:
 [<img src="https://i.imgur.com/9DCGzJh.png">](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo/)
@@ -20,3 +21,6 @@ let value = noise_generator.eval_2d(x * scale, y * scale); // generates value in
 [dependencies]
 opensimplex_noise_rs = "0.1.0"
 ```
+
+### License
+###### This code is under the same "license" as Kurt's OpenSimplex - the public domain "unlicense."
