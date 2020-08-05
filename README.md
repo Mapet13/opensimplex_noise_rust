@@ -22,6 +22,7 @@ opensimplex_noise_rs = "0.1.0"
 ```
 ### Code Examples:
  - [2D Demo](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo/)
+ - [3D Demo](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo_3d)
  - [Island Terrain Generator](https://github.com/Mapet13/terrain-generator-2d)
 
 ### License
