@@ -1,3 +1,3 @@
 # OpenSimplex Noise 3D Visualization Example
 ----------------------------------
-<img src="https://i.imgur.com/rVBx85S.gif">
+![example](examples/noise_3d_example.gif)
