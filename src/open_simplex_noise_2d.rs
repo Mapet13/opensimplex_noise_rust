@@ -9,9 +9,6 @@ const SQUISH: f64 = 0.366_025_403_784_439; // (sqrt(2 + 1) - 1) / 2
 
 const NORMALIZING_SCALAR: f64 = 47.0;
 
-const STRETCH_POINT: Vec2<f64> = Vec2::new(STRETCH, STRETCH);
-const SQUISH_POINT: Vec2<f64> = Vec2::new(SQUISH, SQUISH);
-
 const GRAD_TABLE_2D: [Vec2<f64>; 8] = [
     Vec2::new(5.0, 2.0),
     Vec2::new(2.0, 5.0),
@@ -40,10 +37,10 @@ impl NoiseEvaluator<Vec2<f64>> for OpenSimplexNoise2D {
 impl OpenSimplexNoise2D {
     pub fn eval_2d(x: f64, y: f64, perm: &[i64; PSIZE as usize]) -> f64 {
         let input = Vec2::new(x, y);
-        let stretch: Vec2<f64> = input + (STRETCH_POINT * input.sum());
+        let stretch: Vec2<f64> = input + (Self::STRETCH_POINT * input.sum());
         let grid = stretch.map(fast_floor).map(to_f64);
 
-        let squashed: Vec2<f64> = grid + (SQUISH_POINT * grid.sum());
+        let squashed: Vec2<f64> = grid + (Self::SQUISH_POINT * grid.sum());
         let ins = stretch - grid;
         let origin = input - squashed;
 
