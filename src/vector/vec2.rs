@@ -24,9 +24,9 @@ where
     fn sum(&self) -> T {
         self.x + self.y
     }
-
+    
     fn get_attenuation_factor(&self) -> T {
-        (self.x * self.x) - (self.y * self.y)
+        (self.x * self.x) + (self.y * self.y)
     }
 }
 
