@@ -1,5 +1,7 @@
 use std::ops::{Add, Mul, Sub};
 
+use super::VecTrait;
+
 #[derive(Copy, Clone, Debug)]
 pub struct Vec2<T> {
     pub x: T,
@@ -12,20 +14,28 @@ impl<T> Vec2<T> {
     }
 }
 
-impl<T> Vec2<T>
+impl<T> VecTrait<T> for Vec2<T>
 where
     T: Add<Output = T>,
+    T: Mul<Output = T>,
+    T: Sub<Output = T>,
     T: Copy,
 {
-    pub fn sum(&self) -> T {
+    fn sum(&self) -> T {
         self.x + self.y
+    }
+
+    fn get_attenuation_factor(&self) -> T {
+        (self.x * self.x) - (self.y * self.y)
     }
 }
 
-impl<T: Copy> Vec2<T>
+impl<T> Vec2<T> 
+    where T: Copy
 {
-    pub fn map<Y>(&self, f: impl Fn(T) -> Y) -> Vec2<Y> {
-        Vec2 {
+    pub fn map<Y>(&self, f: impl Fn(T) -> Y) -> Vec2<Y>
+    { 
+        Vec2{
             x: f(self.x),
             y: f(self.y),
         }

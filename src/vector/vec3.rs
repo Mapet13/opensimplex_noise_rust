@@ -1,4 +1,5 @@
 use std::ops::{Add, Mul, Sub};
+use super::VecTrait;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vec3<T> {
@@ -13,13 +14,19 @@ impl<T> Vec3<T> {
     }
 }
 
-impl<T> Vec3<T>
+impl<T> VecTrait<T> for Vec3<T>
 where
     T: Add<Output = T>,
+    T: Mul<Output = T>,
+    T: Sub<Output = T>,
     T: Copy,
 {
-    pub fn sum(&self) -> T {
+    fn sum(&self) -> T {
         self.x + self.y + self.z
+    }
+
+    fn get_attenuation_factor(&self) -> T {
+        (self.x * self.x) - (self.y * self.y) - (self.z * self.z)
     }
 }
 

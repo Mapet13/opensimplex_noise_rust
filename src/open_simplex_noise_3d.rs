@@ -1,13 +1,13 @@
 use super::constants::PSIZE;
-use super::vector::vec3::Vec3;
+use super::vector::{vec3::Vec3, VecTrait};
+
+use super::utils;
+use super::NoiseEvaluator;
 
 const STRETCH: f64 = -1.0 / 6.0; // (1 / sqrt(3 + 1) - 1) / 3
 const SQUISH: f64 = 1.0 / 3.0; // (sqrt(3 + 1) - 1) / 3
 
 const NORMALIZING_SCALAR: f64 = 103.0;
-
-const STRETCH_POINT: Vec3<f64> = Vec3::new(STRETCH, STRETCH, STRETCH);
-const SQUISH_POINT: Vec3<f64> = Vec3::new(SQUISH, SQUISH, SQUISH);
 
 const GRAD_TABLE_2D: [Vec3<f64>; 24] = [
     Vec3::new(-11.0, 4.0, 4.0),
@@ -37,13 +37,28 @@ const GRAD_TABLE_2D: [Vec3<f64>; 24] = [
 ];
 
 pub struct OpenSimplexNoise3D {}
+
+impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
+    const STRETCH_POINT: Vec3<f64> = Vec3::new(STRETCH, STRETCH, STRETCH);
+    const SQUISH_POINT: Vec3<f64> = Vec3::new(SQUISH, SQUISH, SQUISH);
+
+    fn extrapolate(grid: Vec3<f64>, delta: Vec3<f64>, perm: &[i64; PSIZE as usize]) -> f64 {
+        let index0 = (perm[(grid.x as i64 & 0xFF) as usize] + grid.y as i64) & 0xFF;
+        let index1 = (perm[index0 as usize] + grid.z as i64) & 0xFF;
+        let index2 = perm[index1 as usize] % GRAD_TABLE_2D.len() as i64;
+        let point = GRAD_TABLE_2D[index2 as usize];
+
+        point.x * delta.x + point.y * delta.y + point.z * delta.z
+    }
+}
+
 impl OpenSimplexNoise3D {
     pub fn eval_3d(x: f64, y: f64, z: f64, perm: &[i64; PSIZE as usize]) -> f64 {
         let input = Vec3::new(x, y, z);
-        let stretch: Vec3<f64> = input + (STRETCH_POINT * input.sum());
+        let stretch: Vec3<f64> = input + (OpenSimplexNoise3D::STRETCH_POINT * input.sum());
         let grid = stretch.map(fast_floor).map(to_f64);
 
-        let squashed: Vec3<f64> = grid + (SQUISH_POINT * grid.sum());
+        let squashed: Vec3<f64> = grid + (OpenSimplexNoise3D::SQUISH_POINT * grid.sum());
         let ins = stretch - grid;
         let origin = input - squashed;
 
@@ -58,7 +73,7 @@ impl OpenSimplexNoise3D {
     ) -> f64 {
         let mut value = 0.0;
         let mut contribute = |dx: f64, dy: f64, dz: f64| {
-            value += OpenSimplexNoise3D::contribute(dx, dy, dz, origin, grid, perm)
+            value += utils::contribute::<OpenSimplexNoise3D, Vec3<f64>>(Vec3::new(dx, dy, dz), origin, grid, perm)
         };
 
         // Sum those together to get a value that determines the region.
@@ -306,37 +321,6 @@ impl OpenSimplexNoise3D {
         value / NORMALIZING_SCALAR
     }
 
-    fn contribute(
-        dx: f64,
-        dy: f64,
-        dz: f64,
-        origin: Vec3<f64>,
-        grid: Vec3<f64>,
-        perm: &[i64; PSIZE as usize],
-    ) -> f64 {
-        let delta = Vec3::new(dx, dy, dz);
-        let shifted: Vec3<f64> = origin - delta - SQUISH_POINT * delta.sum();
-        let attn: f64 = get_attn(shifted);
-        if attn > 0.0 {
-            let attn2 = attn * attn;
-            return attn2 * attn2 * OpenSimplexNoise3D::extrapolate(grid + delta, shifted, perm);
-        }
-
-        0.0
-    }
-
-    fn extrapolate(grid: Vec3<f64>, delta: Vec3<f64>, perm: &[i64; PSIZE as usize]) -> f64 {
-        let index0 = (perm[(grid.x as i64 & 0xFF) as usize] + grid.y as i64) & 0xFF;
-        let index1 = (perm[index0 as usize] + grid.z as i64) & 0xFF;
-        let index2 = perm[index1 as usize] % GRAD_TABLE_2D.len() as i64;
-        let point = GRAD_TABLE_2D[index2 as usize];
-
-        point.x * delta.x + point.y * delta.y + point.z * delta.z
-    }
-}
-
-fn get_attn(p: Vec3<f64>) -> f64 {
-    2.0 - (p.x * p.x) - (p.y * p.y) - (p.z * p.z)
 }
 
 fn fast_floor(x: f64) -> i64 {
