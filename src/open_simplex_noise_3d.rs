@@ -194,8 +194,8 @@ impl OpenSimplexNoise3D {
             contribute(1.0, 1.0, 1.0);
         } else {
             // Inside the octahedron (Rectified 3-Simplex) in between.
-            let mut a_score;
-            let mut b_score;
+            let a_score;
+            let b_score;
             let mut a_point;
             let mut b_point;
             let mut a_is_further_side;
@@ -231,22 +231,18 @@ impl OpenSimplexNoise3D {
             if p3 > 1.0 {
                 let score = p3 - 1.0;
                 if a_score <= b_score && a_score < score {
-                    a_score = score;
                     a_point = 0x06;
                     a_is_further_side = true;
                 } else if a_score > b_score && b_score < score {
-                    b_score = score;
                     b_point = 0x06;
                     b_is_further_side = true;
                 }
             } else {
                 let score = 1.0 - p3;
                 if a_score <= b_score && a_score < score {
-                    a_score = score;
                     a_point = 0x01;
                     a_is_further_side = false;
                 } else if a_score > b_score && b_score < score {
-                    b_score = score;
                     b_point = 0x01;
                     b_is_further_side = false;
                 }
