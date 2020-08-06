@@ -1,5 +1,5 @@
-mod vector;
 mod utils;
+mod vector;
 
 mod constants;
 use constants::PSIZE;

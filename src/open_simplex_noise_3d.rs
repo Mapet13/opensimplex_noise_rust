@@ -73,7 +73,12 @@ impl OpenSimplexNoise3D {
     ) -> f64 {
         let mut value = 0.0;
         let mut contribute = |dx: f64, dy: f64, dz: f64| {
-            value += utils::contribute::<OpenSimplexNoise3D, Vec3<f64>>(Vec3::new(dx, dy, dz), origin, grid, perm)
+            value += utils::contribute::<OpenSimplexNoise3D, Vec3<f64>>(
+                Vec3::new(dx, dy, dz),
+                origin,
+                grid,
+                perm,
+            )
         };
 
         // Sum those together to get a value that determines the region.
@@ -320,5 +325,4 @@ impl OpenSimplexNoise3D {
 
         value / NORMALIZING_SCALAR
     }
-
 }

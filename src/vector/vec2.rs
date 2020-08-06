@@ -24,18 +24,17 @@ where
     fn sum(&self) -> T {
         self.x + self.y
     }
-    
     fn get_attenuation_factor(&self) -> T {
         (self.x * self.x) + (self.y * self.y)
     }
 }
 
-impl<T> Vec2<T> 
-    where T: Copy
+impl<T> Vec2<T>
+where
+    T: Copy,
 {
-    pub fn map<Y>(&self, f: impl Fn(T) -> Y) -> Vec2<Y>
-    { 
-        Vec2{
+    pub fn map<Y>(&self, f: impl Fn(T) -> Y) -> Vec2<Y> {
+        Vec2 {
             x: f(self.x),
             y: f(self.y),
         }
@@ -56,8 +55,7 @@ where
     }
 }
 
-impl<T: Add<Output = T>> Add<Vec2<T>> for Vec2<T>
-{
+impl<T: Add<Output = T>> Add<Vec2<T>> for Vec2<T> {
     type Output = Vec2<T>;
 
     fn add(self, rhs: Self) -> Self::Output {

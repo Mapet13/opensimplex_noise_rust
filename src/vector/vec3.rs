@@ -1,5 +1,5 @@
-use std::ops::{Add, Mul, Sub};
 use super::VecTrait;
+use std::ops::{Add, Mul, Sub};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vec3<T> {
@@ -30,8 +30,7 @@ where
     }
 }
 
-impl<T: Copy> Vec3<T>
-{
+impl<T: Copy> Vec3<T> {
     pub fn map<Y>(&self, f: impl Fn(T) -> Y) -> Vec3<Y> {
         Vec3 {
             x: f(self.x),
@@ -56,8 +55,7 @@ where
     }
 }
 
-impl<T: Add<Output = T>> Add<Vec3<T>> for Vec3<T>
-{
+impl<T: Add<Output = T>> Add<Vec3<T>> for Vec3<T> {
     type Output = Vec3<T>;
 
     fn add(self, rhs: Self) -> Self::Output {

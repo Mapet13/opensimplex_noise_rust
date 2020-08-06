@@ -53,7 +53,9 @@ impl OpenSimplexNoise2D {
         ins: Vec2<f64>,
         perm: &[i64; PSIZE as usize],
     ) -> f64 {
-        let contribute = |x, y| -> f64 { utils::contribute::<OpenSimplexNoise2D, Vec2<f64>>(Vec2::new(x, y), origin, grid, perm) };
+        let contribute = |x, y| -> f64 {
+            utils::contribute::<OpenSimplexNoise2D, Vec2<f64>>(Vec2::new(x, y), origin, grid, perm)
+        };
 
         let mut value = 0.0;
         value += contribute(1.0, 0.0);
