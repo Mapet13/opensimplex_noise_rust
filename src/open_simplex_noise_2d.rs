@@ -38,7 +38,7 @@ impl OpenSimplexNoise2D {
     pub fn eval_2d(x: f64, y: f64, perm: &[i64; PSIZE as usize]) -> f64 {
         let input = Vec2::new(x, y);
         let stretch: Vec2<f64> = input + (Self::STRETCH_POINT * input.sum());
-        let grid = stretch.map(fast_floor).map(to_f64);
+        let grid = stretch.map(utils::fast_floor).map(utils::to_f64);
 
         let squashed: Vec2<f64> = grid + (Self::SQUISH_POINT * grid.sum());
         let ins = stretch - grid;
@@ -96,16 +96,4 @@ impl OpenSimplexNoise2D {
 
         value / NORMALIZING_SCALAR
     }
-}
-
-fn fast_floor(x: f64) -> i64 {
-    let xi = x as i64;
-    if x < xi as f64 {
-        return xi - 1;
-    }
-    xi
-}
-
-fn to_f64(x: i64) -> f64 {
-    x as f64
 }

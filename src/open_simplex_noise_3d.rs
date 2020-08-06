@@ -56,7 +56,7 @@ impl OpenSimplexNoise3D {
     pub fn eval_3d(x: f64, y: f64, z: f64, perm: &[i64; PSIZE as usize]) -> f64 {
         let input = Vec3::new(x, y, z);
         let stretch: Vec3<f64> = input + (OpenSimplexNoise3D::STRETCH_POINT * input.sum());
-        let grid = stretch.map(fast_floor).map(to_f64);
+        let grid = stretch.map(utils::fast_floor).map(utils::to_f64);
 
         let squashed: Vec3<f64> = grid + (OpenSimplexNoise3D::SQUISH_POINT * grid.sum());
         let ins = stretch - grid;
@@ -321,16 +321,4 @@ impl OpenSimplexNoise3D {
         value / NORMALIZING_SCALAR
     }
 
-}
-
-fn fast_floor(x: f64) -> i64 {
-    let xi = x as i64;
-    if x < xi as f64 {
-        return xi - 1;
-    }
-    xi
-}
-
-fn to_f64(x: i64) -> f64 {
-    x as f64
 }
