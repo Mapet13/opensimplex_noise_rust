@@ -1,13 +1,11 @@
+mod constants;
+mod open_simplex_noise_2d;
+mod open_simplex_noise_3d;
 mod utils;
 mod vector;
 
-mod constants;
 use constants::PSIZE;
-
-mod open_simplex_noise_2d;
 use open_simplex_noise_2d::OpenSimplexNoise2D;
-
-mod open_simplex_noise_3d;
 use open_simplex_noise_3d::OpenSimplexNoise3D;
 
 const DEFAULT_SEED: i64 = 0;

@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul, Sub};
 
-use super::VecTrait;
+use super::VecMethods;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vec2<T> {
@@ -14,7 +14,7 @@ impl<T> Vec2<T> {
     }
 }
 
-impl<T> VecTrait<T> for Vec2<T>
+impl<T> VecMethods<T> for Vec2<T>
 where
     T: Add<Output = T>,
     T: Mul<Output = T>,

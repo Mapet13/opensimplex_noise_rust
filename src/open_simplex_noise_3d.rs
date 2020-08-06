@@ -1,5 +1,5 @@
 use super::constants::PSIZE;
-use super::vector::{vec3::Vec3, VecTrait};
+use super::vector::{vec3::Vec3, VecMethods};
 
 use super::utils;
 use super::NoiseEvaluator;
@@ -56,7 +56,7 @@ impl OpenSimplexNoise3D {
     pub fn eval_3d(x: f64, y: f64, z: f64, perm: &[i64; PSIZE as usize]) -> f64 {
         let input = Vec3::new(x, y, z);
         let stretch: Vec3<f64> = input + (OpenSimplexNoise3D::STRETCH_POINT * input.sum());
-        let grid = stretch.map(utils::fast_floor).map(utils::to_f64);
+        let grid = stretch.map(utils::floor).map(utils::to_f64);
 
         let squashed: Vec3<f64> = grid + (OpenSimplexNoise3D::SQUISH_POINT * grid.sum());
         let ins = stretch - grid;

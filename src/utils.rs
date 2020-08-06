@@ -18,13 +18,9 @@ pub fn contribute<NoiseEvaluatorType: NoiseEvaluator<Vec>, Vec: VecType<f64>>(
     0.0
 }
 
-pub fn fast_floor(x: f64) -> i64 {
-    let xi = x as i64;
-    if x < xi as f64 {
-        return xi - 1;
-    }
-    xi
-}
+pub fn floor(x: f64) -> i64 {
+    x.floor() as i64
+}  
 
 pub fn to_f64(x: i64) -> f64 {
     x as f64

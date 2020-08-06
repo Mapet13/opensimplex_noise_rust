@@ -1,15 +1,15 @@
-use std::ops::{Add, Mul, Sub};
-
 pub mod vec2;
 pub mod vec3;
 
-pub trait VecTrait<T> {
+use std::ops::{Add, Mul, Sub};
+
+pub trait VecMethods<T> {
     fn sum(&self) -> T;
     fn get_attenuation_factor(&self) -> T;
 }
 
 pub trait VecType<T>:
-    VecTrait<T>
+    VecMethods<T>
     + Copy
     + Sub<Self, Output = Self>
     + Add<Self, Output = Self>
@@ -19,7 +19,7 @@ pub trait VecType<T>:
 }
 impl<
         T,
-        X: VecTrait<T>
+        X: VecMethods<T>
             + Copy
             + Sub<Self, Output = Self>
             + Add<Self, Output = Self>

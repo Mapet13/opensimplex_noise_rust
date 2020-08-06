@@ -1,6 +1,6 @@
 use super::constants::PSIZE;
 use super::utils;
-use super::vector::{vec2::Vec2, VecTrait};
+use super::vector::{vec2::Vec2, VecMethods};
 
 use super::NoiseEvaluator;
 
@@ -38,7 +38,7 @@ impl OpenSimplexNoise2D {
     pub fn eval_2d(x: f64, y: f64, perm: &[i64; PSIZE as usize]) -> f64 {
         let input = Vec2::new(x, y);
         let stretch: Vec2<f64> = input + (Self::STRETCH_POINT * input.sum());
-        let grid = stretch.map(utils::fast_floor).map(utils::to_f64);
+        let grid = stretch.map(utils::floor).map(utils::to_f64);
 
         let squashed: Vec2<f64> = grid + (Self::SQUISH_POINT * grid.sum());
         let ins = stretch - grid;
