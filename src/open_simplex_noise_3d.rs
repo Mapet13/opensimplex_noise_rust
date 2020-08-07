@@ -126,6 +126,7 @@ impl OpenSimplexNoise3D {
                 } else if closest == 2 {
                     value += contribute(-1.0, 1.0, 0.0);
                     value += contribute(0.0, 1.0, -1.0);
+                } else {
                     // closest == 4
                     value += contribute(-1.0, 0.0, 1.0);
                     value += contribute(0.0, -1.0, 1.0);
