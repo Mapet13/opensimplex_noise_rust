@@ -64,6 +64,25 @@ impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
     }
 }
 
+fn determine_closest_point(
+    score: Vec2<f64>,
+    point: Vec2<i64>,
+    factor: Vec2<i64>,
+    ins: Vec3<f64>,
+) -> (Vec2<f64>, Vec2<i64>) {
+    let mut score = score;
+    let mut point = point;
+    if ins.x >= ins.y && ins.z > ins.y {
+        score.y = ins.z;
+        point.y = factor.y;
+    } else if ins.x < ins.y && ins.z > ins.x {
+        score.x = ins.z;
+        point.x = factor.x;
+    }
+
+    (score, point)
+}
+
 impl OpenSimplexNoise3D {
     fn get_value(
         grid: Vec3<f64>,
@@ -87,15 +106,12 @@ impl OpenSimplexNoise3D {
             // Inside the tetrahedron (3-Simplex) at (0, 0, 0)
 
             // Determine which two of (0, 0, 1), (0, 1, 0), (1, 0, 0) are closest.
-            let mut score = Vec2::new(ins.x, ins.y);
-            let mut point = Vec2::new(1, 2);
-            if ins.x >= ins.y && ins.z > ins.y {
-                score.y = ins.z;
-                point.y = 4;
-            } else if ins.x < ins.y && ins.z > ins.x {
-                score.x = ins.z;
-                point.x = 4;
-            }
+            let (score, point) = determine_closest_point(
+                Vec2::new(ins.x, ins.y),
+                Vec2::new(1, 2),
+                Vec2::new(4, 4),
+                ins,
+            );
 
             // Now we determine the two lattice points not part of the tetrahedron that may contribute.
             // This depends on the closest two tetrahedral vertices, including (0, 0, 0)
@@ -139,15 +155,12 @@ impl OpenSimplexNoise3D {
             // Inside the tetrahedron (3-Simplex) at (1, 1, 1)
 
             // Determine which two tetrahedral vertices are the closest, out of (1, 1, 0), (1, 0, 1), (0, 1, 1) but not (1, 1, 1).
-            let mut point = Vec2::new(6, 5);
-            let mut score = Vec2::new(ins.x, ins.y);
-            if score.x <= score.y && ins.z < score.y {
-                score.y = ins.z;
-                point.y = 3;
-            } else if score.x > score.y && ins.z < score.x {
-                score.x = ins.z;
-                point.x = 3;
-            }
+            let (score, point) = determine_closest_point(
+                Vec2::new(ins.x, ins.y),
+                Vec2::new(6, 5),
+                Vec2::new(3, 3),
+                ins,
+            );
 
             // Now we determine the two lattice points not part of the tetrahedron that may contribute.
             // This depends on the closest two tetrahedral vertices, including (1, 1, 1)
