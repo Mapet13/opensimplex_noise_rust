@@ -94,8 +94,6 @@ impl OpenSimplexNoise3D {
         in_sum: f64,
         contribute: impl Fn(f64, f64, f64) -> f64,
     ) -> f64 {
-        let mut value = 0.0;
-
         // Determine which two of (0, 0, 1), (0, 1, 0), (1, 0, 0) are closest.
         let (score, point) = OpenSimplexNoise3D::determine_closest_point(
             Vec2::new(ins.x, ins.y),
@@ -106,128 +104,18 @@ impl OpenSimplexNoise3D {
 
         // Now we determine the two lattice points not part of the tetrahedron that may contribute.
         // This depends on the closest two tetrahedral vertices, including (0, 0, 0)
-        value += OpenSimplexNoise3D::determine_lattice_points_including_0_0_0(
+        let value = OpenSimplexNoise3D::determine_lattice_points_including_0_0_0(
             in_sum,
             score,
             point,
             |x, y, z| contribute(x, y, z),
         );
 
-        value += contribute(0.0, 0.0, 0.0)
+        value
+            + contribute(0.0, 0.0, 0.0)
             + contribute(1.0, 0.0, 0.0)
             + contribute(0.0, 1.0, 0.0)
-            + contribute(0.0, 0.0, 1.0);
-
-        value
-    }
-
-    fn determine_further_side(ins: Vec3<f64>) -> (Vec2<bool>, Vec2<i32>) {
-        let decide_between_points = |p: f64, point_val: (i32, i32)| {
-            if p > 1.0 {
-                return (p - 1.0, point_val.0, true)
-            }
-            (1.0 - p, point_val.1, false)
-        };
-
-        // Decide between point (0, 0, 1) and (1, 1, 0) as closest
-        let (score_x, mut point_x, mut is_further_side_x) = decide_between_points(ins.x + ins.y, (3, 4));
-        
-        // Decide between point (0, 1, 0) and (1, 0, 1) as closest
-        let (score_y, mut point_y, mut is_further_side_y) = decide_between_points(ins.x + ins.z, (5, 2));
-
-        // The closest out of the two (1, 0, 0) and (0, 1, 1) will replace
-        // the furthest out of the two decided above, if closer.
-        let p = ins.y + ins.z;
-        if p > 1.0 {
-            let score_value = p - 1.0;
-            if score_x <= score_y && score_x < score_value {
-                point_x = 6;
-                is_further_side_x = true;
-            } else if score_x > score_y && score_y < score_value {
-                point_y = 6;
-                is_further_side_y = true;
-            }
-        } else {
-            let score_value = 1.0 - p;
-            if score_x <= score_y && score_x < score_value {
-                point_x = 1;
-                is_further_side_x = false;
-            } else if score_x > score_y && score_y < score_value {
-                point_y = 1;
-                is_further_side_y = false;
-            }
-        }
-
-        (Vec2::new(is_further_side_x, is_further_side_y), Vec2::new(point_x, point_y))
-    }
-
-    fn inside_octahedron_in_between(
-        ins: Vec3<f64>,
-        contribute: impl Fn(f64, f64, f64) -> f64,
-    ) -> f64 {
-        let mut value = 0.0;
-
-        let (is_further_side, point) = OpenSimplexNoise3D::determine_further_side(ins);
-
-        // Where each of the two closest points are determines how the extra two vertices are calculated.
-        if is_further_side.x == is_further_side.y {
-            if is_further_side.x {
-                // Both closest points on (1, 1, 1) side
-
-                // One of the two extra points is (1, 1, 1)
-                value += contribute(1.0, 1.0, 1.0);
-
-                // Other extra point is based on the shared axis.
-                let closest = point.x & point.y;
-                value += match closest {
-                    1 => contribute(2.0, 0.0, 0.0),
-                    2 => contribute(0.0, 2.0, 0.0),
-                    _ => contribute(0.0, 0.0, 2.0), // closest == 4
-                }
-            } else {
-                // Both closest points on (0, 0, 0) side
-
-                // One of the two extra points is (0, 0, 0)
-                value += contribute(0.0, 0.0, 0.0);
-
-                // Other extra point is based on the omitted axis.
-                let closest = point.x | point.y;
-                value += match closest {
-                    3 => contribute(1.0, 1.0, -1.0),
-                    4 => contribute(1.0, -1.0, 1.0),
-                    _ => contribute(-1.0, 1.0, 1.0), // closest == 6
-                }
-            }
-        } else {
-            // One point on (0, 0, 0) side, one point on (1, 1, 1) side
-            let (c1, c2) = if is_further_side.x {
-                (point.x, point.y)
-            } else {
-                (point.y, point.x)
-            };
-
-            // One contribution is a permutation of (1, 1, -1)
-            value += match c1 {
-                3 => contribute(1.0, 1.0, -1.0),
-                5 => contribute(1.0, -1.0, 1.0),
-                _ => contribute(-1.0, 1.0, 1.0), // c1 == 6
-            };
-            // One contribution is a permutation of (0, 0, 2)
-            value += match c2 {
-                1 => contribute(2.0, 0.0, 0.0),
-                2 => contribute(0.0, 2.0, 0.0),
-                _ => contribute(0.0, 0.0, 2.0), // c1 == 4
-            };
-        }
-
-        value += contribute(1.0, 0.0, 0.0)
-            + contribute(0.0, 1.0, 0.0)
             + contribute(0.0, 0.0, 1.0)
-            + contribute(1.0, 1.0, 0.0)
-            + contribute(1.0, 0.0, 1.0)
-            + contribute(0.0, 1.0, 1.0);
-
-        value
     }
 
     fn inside_tetrahedron_at_1_1_1(
@@ -235,7 +123,6 @@ impl OpenSimplexNoise3D {
         in_sum: f64,
         contribute: impl Fn(f64, f64, f64) -> f64,
     ) -> f64 {
-        let mut value = 0.0;
         // Determine which two tetrahedral vertices are the closest, out of (1, 1, 0), (1, 0, 1), (0, 1, 1) but not (1, 1, 1).
         let (score, point) = OpenSimplexNoise3D::determine_closest_point(
             Vec2::new(ins.x, ins.y),
@@ -246,19 +133,131 @@ impl OpenSimplexNoise3D {
 
         // Now we determine the two lattice points not part of the tetrahedron that may contribute.
         // This depends on the closest two tetrahedral vertices, including (1, 1, 1)
-        value += OpenSimplexNoise3D::determine_lattice_points_including_1_1_1(
+        let value = OpenSimplexNoise3D::determine_lattice_points_including_1_1_1(
             in_sum,
             score,
             point,
             |x, y, z| contribute(x, y, z),
         );
 
-        value += contribute(1.0, 1.0, 0.0)
+        value
+            + contribute(1.0, 1.0, 0.0)
             + contribute(1.0, 0.0, 1.0)
             + contribute(0.0, 1.0, 1.0)
-            + contribute(1.0, 1.0, 1.0);
+            + contribute(1.0, 1.0, 1.0)
+    }
+
+    fn inside_octahedron_in_between(
+        ins: Vec3<f64>,
+        contribute: impl Fn(f64, f64, f64) -> f64,
+    ) -> f64 {
+        let (is_further_side, point) = OpenSimplexNoise3D::determine_further_side(ins);
+
+        // Where each of the two closest points are determines how the extra two vertices are calculated.
+        let value = if is_further_side.x == is_further_side.y {
+            if is_further_side.x {
+                // Both closest points on (1, 1, 1) side
+                // One of the two extra points is (1, 1, 1)
+                // Other extra point is based on the shared axis.
+                let closest = point.x & point.y;
+
+                contribute(1.0, 1.0, 1.0)
+                    + match closest {
+                        1 => contribute(2.0, 0.0, 0.0),
+                        2 => contribute(0.0, 2.0, 0.0),
+                        _ => contribute(0.0, 0.0, 2.0), // closest == 4
+                    }
+            } else {
+                // Both closest points on (0, 0, 0) side
+                // One of the two extra points is (0, 0, 0)
+                // Other extra point is based on the omitted axis.
+                let closest = point.x | point.y;
+
+                contribute(0.0, 0.0, 0.0)
+                    + match closest {
+                        3 => contribute(1.0, 1.0, -1.0),
+                        4 => contribute(1.0, -1.0, 1.0),
+                        _ => contribute(-1.0, 1.0, 1.0), // closest == 6
+                    }
+            }
+        } else {
+            // One point on (0, 0, 0) side, one point on (1, 1, 1) side
+            let (c1, c2) = if is_further_side.x {
+                (point.x, point.y)
+            } else {
+                (point.y, point.x)
+            };
+
+            // One contribution is a permutation of (1, 1, -1)
+            // One contribution is a permutation of (0, 0, 2)
+            (match c1 {
+                3 => contribute(1.0, 1.0, -1.0),
+                5 => contribute(1.0, -1.0, 1.0),
+                _ => contribute(-1.0, 1.0, 1.0), // c1 == 6
+            }) + match c2 {
+                1 => contribute(2.0, 0.0, 0.0),
+                2 => contribute(0.0, 2.0, 0.0),
+                _ => contribute(0.0, 0.0, 2.0), // c1 == 4
+            }
+        };
 
         value
+            + contribute(1.0, 0.0, 0.0)
+            + contribute(0.0, 1.0, 0.0)
+            + contribute(0.0, 0.0, 1.0)
+            + contribute(1.0, 1.0, 0.0)
+            + contribute(1.0, 0.0, 1.0)
+            + contribute(0.0, 1.0, 1.0)
+    }
+
+    fn decide_between_points(ins: Vec3<f64>) -> (Vec2<f64>, Vec2<i32>, Vec2<bool>) {
+        let decide_between_points = |p: f64, point_val: (i32, i32)| {
+            if p > 1.0 {
+                return (p - 1.0, point_val.0, true);
+            }
+            (1.0 - p, point_val.1, false)
+        };
+
+        // Decide between point (0, 0, 1) and (1, 1, 0) as closest
+        let (score_x, point_x, is_further_side_x) = decide_between_points(ins.x + ins.y, (3, 4));
+        // Decide between point (0, 1, 0) and (1, 0, 1) as closest
+        let (score_y, point_y, is_further_side_y) = decide_between_points(ins.x + ins.z, (5, 2));
+
+        (
+            Vec2::new(score_x, score_y),
+            Vec2::new(point_x, point_y),
+            Vec2::new(is_further_side_x, is_further_side_y),
+        )
+    }
+
+    fn determine_further_side(ins: Vec3<f64>) -> (Vec2<bool>, Vec2<i32>) {
+        let (score, mut point, mut is_further_side) =
+            OpenSimplexNoise3D::decide_between_points(ins);
+
+        // The closest out of the two (1, 0, 0) and (0, 1, 1) will replace
+        // the furthest out of the two decided above, if closer.
+        let p = ins.y + ins.z;
+        if p > 1.0 {
+            let score_value = p - 1.0;
+            if score.x <= score.y && score.x < score_value {
+                point.x = 6;
+                is_further_side.x = true;
+            } else if score.x > score.y && score.y < score_value {
+                point.y = 6;
+                is_further_side.y = true;
+            }
+        } else {
+            let score_value = 1.0 - p;
+            if score.x <= score.y && score.x < score_value {
+                point.x = 1;
+                is_further_side.x = false;
+            } else if score.x > score.y && score.y < score_value {
+                point.y = 1;
+                is_further_side.y = false;
+            }
+        }
+
+        (is_further_side, point)
     }
 
     fn determine_closest_point(
