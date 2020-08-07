@@ -64,25 +64,6 @@ impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
     }
 }
 
-fn determine_closest_point(
-    score: Vec2<f64>,
-    point: Vec2<i64>,
-    factor: Vec2<i64>,
-    ins: Vec3<f64>,
-) -> (Vec2<f64>, Vec2<i64>) {
-    let mut score = score;
-    let mut point = point;
-    if ins.x >= ins.y && ins.z > ins.y {
-        score.y = ins.z;
-        point.y = factor.y;
-    } else if ins.x < ins.y && ins.z > ins.x {
-        score.x = ins.z;
-        point.x = factor.x;
-    }
-
-    (score, point)
-}
-
 impl OpenSimplexNoise3D {
     fn get_value(
         grid: Vec3<f64>,
@@ -90,7 +71,6 @@ impl OpenSimplexNoise3D {
         ins: Vec3<f64>,
         perm: &[i64; PSIZE as usize],
     ) -> f64 {
-        let mut value = 0.0;
         let contribute = |x: f64, y: f64, z: f64| {
             utils::contribute::<OpenSimplexNoise3D, Vec3<f64>>(
                 Vec3::new(x, y, z),
@@ -101,196 +81,278 @@ impl OpenSimplexNoise3D {
         };
 
         // Sum those together to get a value that determines the region.
-        let in_sum = ins.sum();
-        if in_sum <= 1.0 {
-            // Inside the tetrahedron (3-Simplex) at (0, 0, 0)
-
-            // Determine which two of (0, 0, 1), (0, 1, 0), (1, 0, 0) are closest.
-            let (score, point) = determine_closest_point(
-                Vec2::new(ins.x, ins.y),
-                Vec2::new(1, 2),
-                Vec2::new(4, 4),
-                ins,
-            );
-
-            // Now we determine the two lattice points not part of the tetrahedron that may contribute.
-            // This depends on the closest two tetrahedral vertices, including (0, 0, 0)
-
-            let wins = 1.0 - in_sum;
-            value += if wins > score.x || wins > score.y {
-                // (0, 0, 0) is one of the closest two tetrahedral vertices.
-                // Our other closest vertex is the closest out of a and b.
-                let closest = if score.y > score.x { point.y } else { point.x };
-                match closest {
-                    1 => contribute(1.0, -1.0, 0.0) + contribute(1.0, 0.0, -1.0),
-                    2 => contribute(-1.0, 1.0, 0.0) + contribute(0.0, 1.0, -1.0),
-                    _ => contribute(-1.0, 0.0, 1.0) + contribute(0.0, -1.0, 1.0), // closest == 4
-                }
-            } else {
-                // (0, 0, 0) is not one of the closest two tetrahedral vertices.
-                // Our two extra vertices are determined by the closest two.
-                let closest = point.x | point.y;
-                match closest {
-                    3 => contribute(1.0, 1.0, 0.0) + contribute(1.0, 1.0, -1.0),
-                    5 => contribute(1.0, 0.0, 1.0) + contribute(1.0, -1.0, 1.0),
-                    _ => contribute(0.0, 1.0, 1.0) + contribute(-1.0, 1.0, 1.0), // closest == 6
-                }
-            };
-
-            value += contribute(0.0, 0.0, 0.0)
-                + contribute(1.0, 0.0, 0.0)
-                + contribute(0.0, 1.0, 0.0)
-                + contribute(0.0, 0.0, 1.0);
-        } else if in_sum >= 2.0 {
-            // Inside the tetrahedron (3-Simplex) at (1, 1, 1)
-
-            // Determine which two tetrahedral vertices are the closest, out of (1, 1, 0), (1, 0, 1), (0, 1, 1) but not (1, 1, 1).
-            let (score, point) = determine_closest_point(
-                Vec2::new(ins.x, ins.y),
-                Vec2::new(6, 5),
-                Vec2::new(3, 3),
-                ins,
-            );
-
-            // Now we determine the two lattice points not part of the tetrahedron that may contribute.
-            // This depends on the closest two tetrahedral vertices, including (1, 1, 1)
-            let wins = 3.0 - in_sum;
-            value += if wins < score.x || wins < score.y {
-                // (1, 1, 1) is one of the closest two tetrahedral vertices.
-                // Our other closest vertex is the closest out of a and b.
-                let closest = if score.y < score.x { point.y } else { point.x };
-                match closest {
-                    3 => contribute(2.0, 1.0, 0.0) + contribute(1.0, 2.0, 0.0),
-                    5 => contribute(2.0, 0.0, 1.0) + contribute(1.0, 0.0, 2.0),
-                    _ => contribute(0.0, 2.0, 1.0) + contribute(0.0, 1.0, 2.0), // closest == 6
-                }
-            } else {
-                // (1, 1, 1) is not one of the closest two tetrahedral vertices.
-                // Our two extra vertices are determined by the closest two.
-                let closest = point.x & point.y;
-                match closest {
-                    1 => contribute(1.0, 0.0, 0.0) + contribute(2.0, 0.0, 0.0),
-                    2 => contribute(0.0, 1.0, 0.0) + contribute(0.0, 2.0, 0.0),
-                    _ => contribute(0.0, 0.0, 1.0) + contribute(0.0, 0.0, 2.0), // closest == 4
-                }
-            };
-
-            value += contribute(1.0, 1.0, 0.0)
-                + contribute(1.0, 0.0, 1.0)
-                + contribute(0.0, 1.0, 1.0)
-                + contribute(1.0, 1.0, 1.0);
-        } else {
-            // Inside the octahedron (Rectified 3-Simplex) in between.
-            let mut score = Vec2::new(0.0, 0.0);
-            let mut point = Vec2::new(0, 0);
-            let mut is_further_side = Vec2::new(false, false);
-
-            // Decide between point (0, 0, 1) and (1, 1, 0) as closest
-            let p1 = ins.x + ins.y;
-            if p1 > 1.0 {
-                score.x = p1 - 1.0;
-                point.x = 3;
-                is_further_side.x = true;
-            } else {
-                score.x = 1.0 - p1;
-                point.x = 4;
-                is_further_side.x = false;
+        let value = match ins.sum() {
+            in_sum if in_sum <= 1.0 => {
+                // Inside the tetrahedron (3-Simplex) at (0, 0, 0)
+                OpenSimplexNoise3D::inside_tetrahedron_at_0_0_0(ins, in_sum, contribute)
             }
-
-            // Decide between point (0, 1, 0) and (1, 0, 1) as closest
-            let p2 = ins.x + ins.z;
-            if p2 > 1.0 {
-                score.y = p2 - 1.0;
-                point.y = 5;
-                is_further_side.y = true;
-            } else {
-                score.y = 1.0 - p2;
-                point.y = 2;
-                is_further_side.y = false;
+            in_sum if in_sum >= 2.0 => {
+                // Inside the tetrahedron (3-Simplex) at (1, 1, 1)
+                OpenSimplexNoise3D::inside_tetrahedron_at_1_1_1(ins, in_sum, contribute)
             }
-
-            // The closest out of the two (1, 0, 0) and (0, 1, 1) will replace
-            // the furthest out of the two decided above, if closer.
-            let p3 = ins.y + ins.z;
-            if p3 > 1.0 {
-                let score_value = p3 - 1.0;
-                if score.x <= score.y && score.x < score_value {
-                    point.x = 6;
-                    is_further_side.x = true;
-                } else if score.x > score.y && score.y < score_value {
-                    point.y = 6;
-                    is_further_side.y = true;
-                }
-            } else {
-                let score_value = 1.0 - p3;
-                if score.x <= score.y && score.x < score_value {
-                    point.x = 1;
-                    is_further_side.x = false;
-                } else if score.x > score.y && score.y < score_value {
-                    point.y = 1;
-                    is_further_side.y = false;
-                }
+            _ => {
+                // Inside the octahedron (Rectified 3-Simplex) in between.
+                OpenSimplexNoise3D::inside_octahedron_in_between(ins, contribute)
             }
-
-            // Where each of the two closest points are determines how the extra two vertices are calculated.
-            if is_further_side.x == is_further_side.y {
-                if is_further_side.x {
-                    // Both closest points on (1, 1, 1) side
-
-                    // One of the two extra points is (1, 1, 1)
-                    value += contribute(1.0, 1.0, 1.0);
-
-                    // Other extra point is based on the shared axis.
-                    let closest = point.x & point.y;
-                    value += match closest {
-                        1 => contribute(2.0, 0.0, 0.0),
-                        2 => contribute(0.0, 2.0, 0.0),
-                        _ => contribute(0.0, 0.0, 2.0), // closest == 4
-                    }
-                } else {
-                    // Both closest points on (0, 0, 0) side
-
-                    // One of the two extra points is (0, 0, 0)
-                    value += contribute(0.0, 0.0, 0.0);
-
-                    // Other extra point is based on the omitted axis.
-                    let closest = point.x | point.y;
-                    value += match closest {
-                        3 => contribute(1.0, 1.0, -1.0),
-                        4 => contribute(1.0, -1.0, 1.0),
-                        _ => contribute(-1.0, 1.0, 1.0), // closest == 6
-                    }
-                }
-            } else {
-                // One point on (0, 0, 0) side, one point on (1, 1, 1) side
-                let (c1, c2) = if is_further_side.x {
-                    (point.x, point.y)
-                } else {
-                    (point.y, point.x)
-                };
-
-                // One contribution is a permutation of (1, 1, -1)
-                value += match c1 {
-                    3 => contribute(1.0, 1.0, -1.0),
-                    5 => contribute(1.0, -1.0, 1.0),
-                    _ => contribute(-1.0, 1.0, 1.0), // c1 == 6
-                };
-                // One contribution is a permutation of (0, 0, 2)
-                value += match c2 {
-                    1 => contribute(2.0, 0.0, 0.0),
-                    2 => contribute(0.0, 2.0, 0.0),
-                    _ => contribute(0.0, 0.0, 2.0), // c1 == 4
-                };
-            }
-
-            value += contribute(1.0, 0.0, 0.0)
-                + contribute(0.0, 1.0, 0.0)
-                + contribute(0.0, 0.0, 1.0)
-                + contribute(1.0, 1.0, 0.0)
-                + contribute(1.0, 0.0, 1.0)
-                + contribute(0.0, 1.0, 1.0);
-        }
+        };
 
         value / NORMALIZING_SCALAR
+    }
+
+    fn inside_tetrahedron_at_0_0_0(
+        ins: Vec3<f64>,
+        in_sum: f64,
+        contribute: impl Fn(f64, f64, f64) -> f64,
+    ) -> f64 {
+        let mut value = 0.0;
+
+        // Determine which two of (0, 0, 1), (0, 1, 0), (1, 0, 0) are closest.
+        let (score, point) = OpenSimplexNoise3D::determine_closest_point(
+            Vec2::new(ins.x, ins.y),
+            Vec2::new(1, 2),
+            Vec2::new(4, 4),
+            ins,
+        );
+
+        // Now we determine the two lattice points not part of the tetrahedron that may contribute.
+        // This depends on the closest two tetrahedral vertices, including (0, 0, 0)
+        value += OpenSimplexNoise3D::determine_lattice_points_including_0_0_0(
+            in_sum,
+            score,
+            point,
+            |x, y, z| contribute(x, y, z),
+        );
+
+        value += contribute(0.0, 0.0, 0.0)
+            + contribute(1.0, 0.0, 0.0)
+            + contribute(0.0, 1.0, 0.0)
+            + contribute(0.0, 0.0, 1.0);
+
+        value
+    }
+
+    fn inside_octahedron_in_between(
+        ins: Vec3<f64>,
+        contribute: impl Fn(f64, f64, f64) -> f64,
+    ) -> f64 {
+        let mut value = 0.0;
+
+        let mut score = Vec2::new(0.0, 0.0);
+        let mut point = Vec2::new(0, 0);
+        let mut is_further_side = Vec2::new(false, false);
+
+        // Decide between point (0, 0, 1) and (1, 1, 0) as closest
+        let p1 = ins.x + ins.y;
+        if p1 > 1.0 {
+            score.x = p1 - 1.0;
+            point.x = 3;
+            is_further_side.x = true;
+        } else {
+            score.x = 1.0 - p1;
+            point.x = 4;
+            is_further_side.x = false;
+        }
+
+        // Decide between point (0, 1, 0) and (1, 0, 1) as closest
+        let p2 = ins.x + ins.z;
+        if p2 > 1.0 {
+            score.y = p2 - 1.0;
+            point.y = 5;
+            is_further_side.y = true;
+        } else {
+            score.y = 1.0 - p2;
+            point.y = 2;
+            is_further_side.y = false;
+        }
+
+        // The closest out of the two (1, 0, 0) and (0, 1, 1) will replace
+        // the furthest out of the two decided above, if closer.
+        let p3 = ins.y + ins.z;
+        if p3 > 1.0 {
+            let score_value = p3 - 1.0;
+            if score.x <= score.y && score.x < score_value {
+                point.x = 6;
+                is_further_side.x = true;
+            } else if score.x > score.y && score.y < score_value {
+                point.y = 6;
+                is_further_side.y = true;
+            }
+        } else {
+            let score_value = 1.0 - p3;
+            if score.x <= score.y && score.x < score_value {
+                point.x = 1;
+                is_further_side.x = false;
+            } else if score.x > score.y && score.y < score_value {
+                point.y = 1;
+                is_further_side.y = false;
+            }
+        }
+
+        // Where each of the two closest points are determines how the extra two vertices are calculated.
+        if is_further_side.x == is_further_side.y {
+            if is_further_side.x {
+                // Both closest points on (1, 1, 1) side
+
+                // One of the two extra points is (1, 1, 1)
+                value += contribute(1.0, 1.0, 1.0);
+
+                // Other extra point is based on the shared axis.
+                let closest = point.x & point.y;
+                value += match closest {
+                    1 => contribute(2.0, 0.0, 0.0),
+                    2 => contribute(0.0, 2.0, 0.0),
+                    _ => contribute(0.0, 0.0, 2.0), // closest == 4
+                }
+            } else {
+                // Both closest points on (0, 0, 0) side
+
+                // One of the two extra points is (0, 0, 0)
+                value += contribute(0.0, 0.0, 0.0);
+
+                // Other extra point is based on the omitted axis.
+                let closest = point.x | point.y;
+                value += match closest {
+                    3 => contribute(1.0, 1.0, -1.0),
+                    4 => contribute(1.0, -1.0, 1.0),
+                    _ => contribute(-1.0, 1.0, 1.0), // closest == 6
+                }
+            }
+        } else {
+            // One point on (0, 0, 0) side, one point on (1, 1, 1) side
+            let (c1, c2) = if is_further_side.x {
+                (point.x, point.y)
+            } else {
+                (point.y, point.x)
+            };
+
+            // One contribution is a permutation of (1, 1, -1)
+            value += match c1 {
+                3 => contribute(1.0, 1.0, -1.0),
+                5 => contribute(1.0, -1.0, 1.0),
+                _ => contribute(-1.0, 1.0, 1.0), // c1 == 6
+            };
+            // One contribution is a permutation of (0, 0, 2)
+            value += match c2 {
+                1 => contribute(2.0, 0.0, 0.0),
+                2 => contribute(0.0, 2.0, 0.0),
+                _ => contribute(0.0, 0.0, 2.0), // c1 == 4
+            };
+        }
+
+        value += contribute(1.0, 0.0, 0.0)
+            + contribute(0.0, 1.0, 0.0)
+            + contribute(0.0, 0.0, 1.0)
+            + contribute(1.0, 1.0, 0.0)
+            + contribute(1.0, 0.0, 1.0)
+            + contribute(0.0, 1.0, 1.0);
+
+        value
+    }
+
+    fn inside_tetrahedron_at_1_1_1(
+        ins: Vec3<f64>,
+        in_sum: f64,
+        contribute: impl Fn(f64, f64, f64) -> f64,
+    ) -> f64 {
+        let mut value = 0.0;
+        // Determine which two tetrahedral vertices are the closest, out of (1, 1, 0), (1, 0, 1), (0, 1, 1) but not (1, 1, 1).
+        let (score, point) = OpenSimplexNoise3D::determine_closest_point(
+            Vec2::new(ins.x, ins.y),
+            Vec2::new(6, 5),
+            Vec2::new(3, 3),
+            ins,
+        );
+
+        // Now we determine the two lattice points not part of the tetrahedron that may contribute.
+        // This depends on the closest two tetrahedral vertices, including (1, 1, 1)
+        value += OpenSimplexNoise3D::determine_lattice_points_including_1_1_1(
+            in_sum,
+            score,
+            point,
+            |x, y, z| contribute(x, y, z),
+        );
+
+        value += contribute(1.0, 1.0, 0.0)
+            + contribute(1.0, 0.0, 1.0)
+            + contribute(0.0, 1.0, 1.0)
+            + contribute(1.0, 1.0, 1.0);
+
+        value
+    }
+
+    fn determine_closest_point(
+        score: Vec2<f64>,
+        point: Vec2<i64>,
+        factor: Vec2<i64>,
+        ins: Vec3<f64>,
+    ) -> (Vec2<f64>, Vec2<i64>) {
+        let mut score = score;
+        let mut point = point;
+        if ins.x >= ins.y && ins.z > ins.y {
+            score.y = ins.z;
+            point.y = factor.y;
+        } else if ins.x < ins.y && ins.z > ins.x {
+            score.x = ins.z;
+            point.x = factor.x;
+        }
+
+        (score, point)
+    }
+
+    fn determine_lattice_points_including_0_0_0(
+        in_sum: f64,
+        score: Vec2<f64>,
+        point: Vec2<i64>,
+        contribute: impl Fn(f64, f64, f64) -> f64,
+    ) -> f64 {
+        let wins = 1.0 - in_sum;
+
+        if wins > score.x || wins > score.y {
+            // (0, 0, 0) is one of the closest two tetrahedral vertices.
+            // Our other closest vertex is the closest out of a and b.
+            let closest = if score.y > score.x { point.y } else { point.x };
+            match closest {
+                1 => contribute(1.0, -1.0, 0.0) + contribute(1.0, 0.0, -1.0),
+                2 => contribute(-1.0, 1.0, 0.0) + contribute(0.0, 1.0, -1.0),
+                _ => contribute(-1.0, 0.0, 1.0) + contribute(0.0, -1.0, 1.0), // closest == 4
+            }
+        } else {
+            // (0, 0, 0) is not one of the closest two tetrahedral vertices.
+            // Our two extra vertices are determined by the closest two.
+            let closest = point.x | point.y;
+            match closest {
+                3 => contribute(1.0, 1.0, 0.0) + contribute(1.0, 1.0, -1.0),
+                5 => contribute(1.0, 0.0, 1.0) + contribute(1.0, -1.0, 1.0),
+                _ => contribute(0.0, 1.0, 1.0) + contribute(-1.0, 1.0, 1.0), // closest == 6
+            }
+        }
+    }
+
+    fn determine_lattice_points_including_1_1_1(
+        in_sum: f64,
+        score: Vec2<f64>,
+        point: Vec2<i64>,
+        contribute: impl Fn(f64, f64, f64) -> f64,
+    ) -> f64 {
+        let wins = 3.0 - in_sum;
+        if wins < score.x || wins < score.y {
+            // (1, 1, 1) is one of the closest two tetrahedral vertices.
+            // Our other closest vertex is the closest out of a and b.
+            let closest = if score.y < score.x { point.y } else { point.x };
+            match closest {
+                3 => contribute(2.0, 1.0, 0.0) + contribute(1.0, 2.0, 0.0),
+                5 => contribute(2.0, 0.0, 1.0) + contribute(1.0, 0.0, 2.0),
+                _ => contribute(0.0, 2.0, 1.0) + contribute(0.0, 1.0, 2.0), // closest == 6
+            }
+        } else {
+            // (1, 1, 1) is not one of the closest two tetrahedral vertices.
+            // Our two extra vertices are determined by the closest two.
+            let closest = point.x & point.y;
+            match closest {
+                1 => contribute(1.0, 0.0, 0.0) + contribute(2.0, 0.0, 0.0),
+                2 => contribute(0.0, 1.0, 0.0) + contribute(0.0, 2.0, 0.0),
+                _ => contribute(0.0, 0.0, 1.0) + contribute(0.0, 0.0, 2.0), // closest == 4
+            }
+        }
     }
 }
