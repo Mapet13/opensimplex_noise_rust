@@ -26,9 +26,7 @@ impl NoiseEvaluator<Vec2<f64>> for OpenSimplexNoise2D {
     const SQUISH_POINT: Vec2<f64> = Vec2::new(SQUISH, SQUISH);
 
     fn extrapolate(grid: Vec2<f64>, delta: Vec2<f64>, perm: &PermTable) -> f64 {
-        let index0 = (perm[(grid.x as i64 & 0xFF) as usize] + grid.y as i64) & 0xFF;
-        let index1 = (perm[index0 as usize] & 0x0E) >> 1;
-        let point = GRAD_TABLE_2D[index1 as usize];
+        let point = GRAD_TABLE_2D[OpenSimplexNoise2D::get_grad_table_index(grid, perm)];
         point.x * delta.x + point.y * delta.y
     }
 
@@ -61,10 +59,9 @@ impl OpenSimplexNoise2D {
 
     fn evaluate_inside_triangle(ins: Vec2<f64>, contribute: impl Fn(f64, f64) -> f64) -> f64 {
         let in_sum = ins.sum();
-        let factor_point = if in_sum <= 1.0 {
-            Vec2::new(0.0, 0.0)
-        } else {
-            Vec2::new(1.0, 1.0)
+        let factor_point = match in_sum {
+            x if x <= 1.0 => Vec2::new(0.0, 0.0),
+            _ => Vec2::new(1.0, 1.0),
         };
         OpenSimplexNoise2D::evaluate_inside_triangle_at(factor_point, in_sum, ins, contribute)
     }
@@ -76,21 +73,23 @@ impl OpenSimplexNoise2D {
         contribute: impl Fn(f64, f64) -> f64,
     ) -> f64 {
         let zins = 1.0 + factor_point.x - in_sum;
-        let mut value = 0.0;
-        if zins > ins.x || zins > ins.y {
+        let point = if zins > ins.x || zins > ins.y {
             // (0, 0) is one of the closest two triangular vertices
             if ins.x > ins.y {
-                value += contribute(1.0 + factor_point.x, -1.0 + factor_point.y);
+                Vec2::new(1.0 + factor_point.x, -1.0 + factor_point.y)
             } else {
-                value += contribute(-1.0 + factor_point.x, 1.0 + factor_point.y);
+                Vec2::new(-1.0 + factor_point.x, 1.0 + factor_point.y)
             }
         } else {
             // (1, 0) and (0, 1) are the closest two vertices.
-            value += contribute(1.0 - factor_point.x, 1.0 - factor_point.y);
-        }
+            Vec2::new(1.0 - factor_point.x, 1.0 - factor_point.y)
+        };
 
-        value += contribute(0.0 + factor_point.x, 0.0 + factor_point.y);
+        contribute(0.0 + factor_point.x, 0.0 + factor_point.y) + contribute(point.x, point.y)
+    }
 
-        value
+    fn get_grad_table_index(grid: Vec2<f64>, perm: &PermTable) -> usize {
+        let index0 = ((perm[(grid.x as i64 & 0xFF) as usize] + grid.y as i64) & 0xFF) as usize;
+        ((perm[index0] & 0x0E) >> 1) as usize
     }
 }
