@@ -42,10 +42,7 @@ impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
     const SQUISH_POINT: Vec3<f64> = Vec3::new(SQUISH, SQUISH, SQUISH);
 
     fn extrapolate(grid: Vec3<f64>, delta: Vec3<f64>, perm: &PermTable) -> f64 {
-        let index0 = (perm[(grid.x as i64 & 0xFF) as usize] + grid.y as i64) & 0xFF;
-        let index1 = (perm[index0 as usize] + grid.z as i64) & 0xFF;
-        let index2 = perm[index1 as usize] % GRAD_TABLE_2D.len() as i64;
-        let point = GRAD_TABLE_2D[index2 as usize];
+        let point = GRAD_TABLE_2D[OpenSimplexNoise3D::get_grad_table_index(grid, perm)];
 
         point.x * delta.x + point.y * delta.y + point.z * delta.z
     }
@@ -130,67 +127,52 @@ impl OpenSimplexNoise3D {
     ) -> f64 {
         let mut value = 0.0;
 
-        let mut score = Vec2::new(0.0, 0.0);
-        let mut point = Vec2::new(0, 0);
-        let mut is_further_side = Vec2::new(false, false);
+        let decide_between_points = |p: f64, point_val: (i32, i32)| {
+            if p > 1.0 {
+                return (p - 1.0, point_val.0, true)
+            }
+            (1.0 - p, point_val.1, false)
+        };
 
         // Decide between point (0, 0, 1) and (1, 1, 0) as closest
-        let p1 = ins.x + ins.y;
-        if p1 > 1.0 {
-            score.x = p1 - 1.0;
-            point.x = 3;
-            is_further_side.x = true;
-        } else {
-            score.x = 1.0 - p1;
-            point.x = 4;
-            is_further_side.x = false;
-        }
-
+        let (score_x, mut point_x, mut is_further_side_x) = decide_between_points(ins.x + ins.y, (3, 4));
+        
         // Decide between point (0, 1, 0) and (1, 0, 1) as closest
-        let p2 = ins.x + ins.z;
-        if p2 > 1.0 {
-            score.y = p2 - 1.0;
-            point.y = 5;
-            is_further_side.y = true;
-        } else {
-            score.y = 1.0 - p2;
-            point.y = 2;
-            is_further_side.y = false;
-        }
+        let (score_y, mut point_y, mut is_further_side_y) = decide_between_points(ins.x + ins.z, (5, 2));
 
         // The closest out of the two (1, 0, 0) and (0, 1, 1) will replace
         // the furthest out of the two decided above, if closer.
-        let p3 = ins.y + ins.z;
-        if p3 > 1.0 {
-            let score_value = p3 - 1.0;
-            if score.x <= score.y && score.x < score_value {
-                point.x = 6;
-                is_further_side.x = true;
-            } else if score.x > score.y && score.y < score_value {
-                point.y = 6;
-                is_further_side.y = true;
+        let p = ins.y + ins.z;
+        if p > 1.0 {
+            let score_value = p - 1.0;
+            if score_x <= score_y && score_x < score_value {
+                point_x = 6;
+                is_further_side_x = true;
+            } else if score_x > score_y && score_y < score_value {
+                point_y = 6;
+                is_further_side_y = true;
             }
         } else {
-            let score_value = 1.0 - p3;
-            if score.x <= score.y && score.x < score_value {
-                point.x = 1;
-                is_further_side.x = false;
-            } else if score.x > score.y && score.y < score_value {
-                point.y = 1;
-                is_further_side.y = false;
+            let score_value = 1.0 - p;
+            if score_x <= score_y && score_x < score_value {
+                point_x = 1;
+                is_further_side_x = false;
+            } else if score_x > score_y && score_y < score_value {
+                point_y = 1;
+                is_further_side_y = false;
             }
         }
 
         // Where each of the two closest points are determines how the extra two vertices are calculated.
-        if is_further_side.x == is_further_side.y {
-            if is_further_side.x {
+        if is_further_side_x == is_further_side_y {
+            if is_further_side_x {
                 // Both closest points on (1, 1, 1) side
 
                 // One of the two extra points is (1, 1, 1)
                 value += contribute(1.0, 1.0, 1.0);
 
                 // Other extra point is based on the shared axis.
-                let closest = point.x & point.y;
+                let closest = point_x & point_y;
                 value += match closest {
                     1 => contribute(2.0, 0.0, 0.0),
                     2 => contribute(0.0, 2.0, 0.0),
@@ -203,7 +185,7 @@ impl OpenSimplexNoise3D {
                 value += contribute(0.0, 0.0, 0.0);
 
                 // Other extra point is based on the omitted axis.
-                let closest = point.x | point.y;
+                let closest = point_x | point_y;
                 value += match closest {
                     3 => contribute(1.0, 1.0, -1.0),
                     4 => contribute(1.0, -1.0, 1.0),
@@ -212,10 +194,10 @@ impl OpenSimplexNoise3D {
             }
         } else {
             // One point on (0, 0, 0) side, one point on (1, 1, 1) side
-            let (c1, c2) = if is_further_side.x {
-                (point.x, point.y)
+            let (c1, c2) = if is_further_side_x {
+                (point_x, point_y)
             } else {
-                (point.y, point.x)
+                (point_y, point_x)
             };
 
             // One contribution is a permutation of (1, 1, -1)
@@ -347,5 +329,11 @@ impl OpenSimplexNoise3D {
                 _ => contribute(0.0, 0.0, 1.0) + contribute(0.0, 0.0, 2.0), // closest == 4
             }
         }
+    }
+
+    fn get_grad_table_index(grid: Vec3<f64>, perm: &PermTable) -> usize {
+        let index0 = ((perm[(grid.x as i64 & 0xFF) as usize] + grid.y as i64) & 0xFF) as usize;
+        let index1 = ((perm[index0] + grid.z as i64) & 0xFF) as usize;
+        perm[index1] as usize % GRAD_TABLE_2D.len()
     }
 }
