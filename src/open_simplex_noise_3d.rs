@@ -121,12 +121,7 @@ impl OpenSimplexNoise3D {
         value
     }
 
-    fn inside_octahedron_in_between(
-        ins: Vec3<f64>,
-        contribute: impl Fn(f64, f64, f64) -> f64,
-    ) -> f64 {
-        let mut value = 0.0;
-
+    fn determine_further_side(ins: Vec3<f64>) -> (Vec2<bool>, Vec2<i32>) {
         let decide_between_points = |p: f64, point_val: (i32, i32)| {
             if p > 1.0 {
                 return (p - 1.0, point_val.0, true)
@@ -163,16 +158,27 @@ impl OpenSimplexNoise3D {
             }
         }
 
+        (Vec2::new(is_further_side_x, is_further_side_y), Vec2::new(point_x, point_y))
+    }
+
+    fn inside_octahedron_in_between(
+        ins: Vec3<f64>,
+        contribute: impl Fn(f64, f64, f64) -> f64,
+    ) -> f64 {
+        let mut value = 0.0;
+
+        let (is_further_side, point) = OpenSimplexNoise3D::determine_further_side(ins);
+
         // Where each of the two closest points are determines how the extra two vertices are calculated.
-        if is_further_side_x == is_further_side_y {
-            if is_further_side_x {
+        if is_further_side.x == is_further_side.y {
+            if is_further_side.x {
                 // Both closest points on (1, 1, 1) side
 
                 // One of the two extra points is (1, 1, 1)
                 value += contribute(1.0, 1.0, 1.0);
 
                 // Other extra point is based on the shared axis.
-                let closest = point_x & point_y;
+                let closest = point.x & point.y;
                 value += match closest {
                     1 => contribute(2.0, 0.0, 0.0),
                     2 => contribute(0.0, 2.0, 0.0),
@@ -185,7 +191,7 @@ impl OpenSimplexNoise3D {
                 value += contribute(0.0, 0.0, 0.0);
 
                 // Other extra point is based on the omitted axis.
-                let closest = point_x | point_y;
+                let closest = point.x | point.y;
                 value += match closest {
                     3 => contribute(1.0, 1.0, -1.0),
                     4 => contribute(1.0, -1.0, 1.0),
@@ -194,10 +200,10 @@ impl OpenSimplexNoise3D {
             }
         } else {
             // One point on (0, 0, 0) side, one point on (1, 1, 1) side
-            let (c1, c2) = if is_further_side_x {
-                (point_x, point_y)
+            let (c1, c2) = if is_further_side.x {
+                (point.x, point.y)
             } else {
-                (point_y, point_x)
+                (point.y, point.x)
             };
 
             // One contribution is a permutation of (1, 1, -1)
