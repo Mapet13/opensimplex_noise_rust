@@ -335,7 +335,7 @@ dependencies = [
 
 [[package]]
 name = "opensimplex_noise_rs"
-version = "0.1.0"
+version = "0.2.1"
 
 [[package]]
 name = "png"

@@ -18,7 +18,7 @@ let value = noise_generator.eval_2d(x * scale, y * scale); // generates value in
 ###### Just add this line to Cargo.toml file in your Rust project
 ```toml
 [dependencies]
-opensimplex_noise_rs = "0.2.0"
+opensimplex_noise_rs = "0.2.1"
 ```
 ### Code Examples:
  - [2D Demo](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo/)
