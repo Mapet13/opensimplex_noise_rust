@@ -1,9 +1,8 @@
-use super::constants::PSIZE;
 use super::vector::{vec3::Vec3, VecMethods};
 
 use super::utils;
 use super::NoiseEvaluator;
-use crate::vector::vec2::Vec2;
+use super::{PermTable, vector::vec2::Vec2};
 
 const STRETCH: f64 = -1.0 / 6.0; // (1 / sqrt(3 + 1) - 1) / 3
 const SQUISH: f64 = 1.0 / 3.0; // (sqrt(3 + 1) - 1) / 3
@@ -43,7 +42,7 @@ impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
     const STRETCH_POINT: Vec3<f64> = Vec3::new(STRETCH, STRETCH, STRETCH);
     const SQUISH_POINT: Vec3<f64> = Vec3::new(SQUISH, SQUISH, SQUISH);
 
-    fn extrapolate(grid: Vec3<f64>, delta: Vec3<f64>, perm: &[i64; PSIZE as usize]) -> f64 {
+    fn extrapolate(grid: Vec3<f64>, delta: Vec3<f64>, perm: &PermTable) -> f64 {
         let index0 = (perm[(grid.x as i64 & 0xFF) as usize] + grid.y as i64) & 0xFF;
         let index1 = (perm[index0 as usize] + grid.z as i64) & 0xFF;
         let index2 = perm[index1 as usize] % GRAD_TABLE_2D.len() as i64;
@@ -52,7 +51,7 @@ impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
         point.x * delta.x + point.y * delta.y + point.z * delta.z
     }
 
-    fn eval(input: Vec3<f64>, perm: &[i64; PSIZE as usize]) -> f64 {
+    fn eval(input: Vec3<f64>, perm: &PermTable) -> f64 {
         let stretch: Vec3<f64> = input + (OpenSimplexNoise3D::STRETCH_POINT * input.sum());
         let grid = stretch.map(utils::floor).map(utils::to_f64);
 
@@ -69,7 +68,7 @@ impl OpenSimplexNoise3D {
         grid: Vec3<f64>,
         origin: Vec3<f64>,
         ins: Vec3<f64>,
-        perm: &[i64; PSIZE as usize],
+        perm: &PermTable,
     ) -> f64 {
         let contribute = |x: f64, y: f64, z: f64| {
             utils::contribute::<OpenSimplexNoise3D, Vec3<f64>>(

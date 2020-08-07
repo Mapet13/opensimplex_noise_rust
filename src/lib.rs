@@ -1,18 +1,19 @@
-mod constants;
 mod open_simplex_noise_2d;
 mod open_simplex_noise_3d;
 mod utils;
 mod vector;
 
-use constants::PSIZE;
 use open_simplex_noise_2d::OpenSimplexNoise2D;
 use open_simplex_noise_3d::OpenSimplexNoise3D;
 use vector::{vec2::Vec2, vec3::Vec3};
 
+pub const PSIZE: i64 = 2048;
 const DEFAULT_SEED: i64 = 0;
 
+type PermTable = [i64; PSIZE as usize];
+
 pub struct OpenSimplexNoise {
-    perm: [i64; PSIZE as usize],
+    perm: PermTable,
 }
 
 impl OpenSimplexNoise {
@@ -40,12 +41,12 @@ pub trait NoiseEvaluator<T: vector::VecType<f64>> {
     const STRETCH_POINT: T;
     const SQUISH_POINT: T;
 
-    fn eval(point: T, perm: &[i64; PSIZE as usize]) -> f64;
-    fn extrapolate(grid: T, delta: T, perm: &[i64; PSIZE as usize]) -> f64;
+    fn eval(point: T, perm: &PermTable) -> f64;
+    fn extrapolate(grid: T, delta: T, perm: &PermTable) -> f64;
 }
 
-fn generate_perm_array(seed: i64) -> [i64; PSIZE as usize] {
-    let mut perm: [i64; PSIZE as usize] = [0; PSIZE as usize];
+fn generate_perm_array(seed: i64) -> PermTable {
+    let mut perm: PermTable = [0; PSIZE as usize];
 
     let mut source: Vec<i64> = (0..PSIZE).map(|x| x).collect();
 

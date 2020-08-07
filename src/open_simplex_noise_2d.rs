@@ -1,8 +1,8 @@
-use super::constants::PSIZE;
 use super::utils;
 use super::vector::{vec2::Vec2, VecMethods};
 
 use super::NoiseEvaluator;
+use super::PermTable;
 
 const STRETCH: f64 = -0.211_324_865_405_187; // (1 / sqrt(2 + 1) - 1) / 2
 const SQUISH: f64 = 0.366_025_403_784_439; // (sqrt(2 + 1) - 1) / 2
@@ -26,14 +26,14 @@ impl NoiseEvaluator<Vec2<f64>> for OpenSimplexNoise2D {
     const STRETCH_POINT: Vec2<f64> = Vec2::new(STRETCH, STRETCH);
     const SQUISH_POINT: Vec2<f64> = Vec2::new(SQUISH, SQUISH);
 
-    fn extrapolate(grid: Vec2<f64>, delta: Vec2<f64>, perm: &[i64; PSIZE as usize]) -> f64 {
+    fn extrapolate(grid: Vec2<f64>, delta: Vec2<f64>, perm: &PermTable) -> f64 {
         let index0 = (perm[(grid.x as i64 & 0xFF) as usize] + grid.y as i64) & 0xFF;
         let index1 = (perm[index0 as usize] & 0x0E) >> 1;
         let point = GRAD_TABLE_2D[index1 as usize];
         point.x * delta.x + point.y * delta.y
     }
 
-    fn eval(input: Vec2<f64>, perm: &[i64; PSIZE as usize]) -> f64 {
+    fn eval(input: Vec2<f64>, perm: &PermTable) -> f64 {
         let stretch: Vec2<f64> = input + (Self::STRETCH_POINT * input.sum());
         let grid = stretch.map(utils::floor).map(utils::to_f64);
 
@@ -50,7 +50,7 @@ impl OpenSimplexNoise2D {
         grid: Vec2<f64>,
         origin: Vec2<f64>,
         ins: Vec2<f64>,
-        perm: &[i64; PSIZE as usize],
+        perm: &PermTable,
     ) -> f64 {
         let mut value = 0.0;
         let contribute = |x, y| -> f64 {
