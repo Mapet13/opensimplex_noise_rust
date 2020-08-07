@@ -50,8 +50,8 @@ fn generate_perm_array(seed: i64) -> PermTable {
 
     let mut source: Vec<i64> = (0..PSIZE).map(|x| x).collect();
 
+    let seed: i128 = (seed as i128 * 6_364_136_223_846_793_005) + 1_442_695_040_888_963_407;
     for i in (0..PSIZE).rev() {
-        let seed: i128 = (seed as i128 * 6_364_136_223_846_793_005) + 1_442_695_040_888_963_407;
         let mut r = ((seed + 31) % (i as i128 + 1)) as i64;
         if r < 0 {
             r += i + 1;
