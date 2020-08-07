@@ -7,6 +7,7 @@ mod vector;
 use constants::PSIZE;
 use open_simplex_noise_2d::OpenSimplexNoise2D;
 use open_simplex_noise_3d::OpenSimplexNoise3D;
+use vector::{vec2::Vec2, vec3::Vec3};
 
 const DEFAULT_SEED: i64 = 0;
 
@@ -27,11 +28,11 @@ impl OpenSimplexNoise {
     }
 
     pub fn eval_2d(&self, x: f64, y: f64) -> f64 {
-        OpenSimplexNoise2D::eval_2d(x, y, &self.perm)
+        OpenSimplexNoise2D::eval(Vec2::new(x, y), &self.perm)
     }
 
     pub fn eval_3d(&self, x: f64, y: f64, z: f64) -> f64 {
-        OpenSimplexNoise3D::eval_3d(x, y, z, &self.perm)
+        OpenSimplexNoise3D::eval(Vec3::new(x, y, z), &self.perm)
     }
 }
 
@@ -39,6 +40,7 @@ pub trait NoiseEvaluator<T: vector::VecType<f64>> {
     const STRETCH_POINT: T;
     const SQUISH_POINT: T;
 
+    fn eval(point: T, perm: &[i64; PSIZE as usize]) -> f64;
     fn extrapolate(grid: T, delta: T, perm: &[i64; PSIZE as usize]) -> f64;
 }
 

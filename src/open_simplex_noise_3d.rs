@@ -50,11 +50,8 @@ impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
 
         point.x * delta.x + point.y * delta.y + point.z * delta.z
     }
-}
 
-impl OpenSimplexNoise3D {
-    pub fn eval_3d(x: f64, y: f64, z: f64, perm: &[i64; PSIZE as usize]) -> f64 {
-        let input = Vec3::new(x, y, z);
+    fn eval(input: Vec3<f64>, perm: &[i64; PSIZE as usize]) -> f64 { 
         let stretch: Vec3<f64> = input + (OpenSimplexNoise3D::STRETCH_POINT * input.sum());
         let grid = stretch.map(utils::floor).map(utils::to_f64);
 
@@ -62,18 +59,20 @@ impl OpenSimplexNoise3D {
         let ins = stretch - grid;
         let origin = input - squashed;
 
-        OpenSimplexNoise3D::eval(grid, origin, ins, perm)
-    }
+        OpenSimplexNoise3D::get_value(grid, origin, ins, perm)
+     } 
+}
 
-    fn eval(
+impl OpenSimplexNoise3D {
+    fn get_value(
         grid: Vec3<f64>,
         origin: Vec3<f64>,
         ins: Vec3<f64>,
         perm: &[i64; PSIZE as usize],
     ) -> f64 {
         let mut value = 0.0;
-        let mut contribute = |dx: f64, dy: f64, dz: f64| {
-            value += utils::contribute::<OpenSimplexNoise3D, Vec3<f64>>(
+        let contribute = |dx: f64, dy: f64, dz: f64| {
+            utils::contribute::<OpenSimplexNoise3D, Vec3<f64>>(
                 Vec3::new(dx, dy, dz),
                 origin,
                 grid,
@@ -107,36 +106,36 @@ impl OpenSimplexNoise3D {
                 // Our other closest vertex is the closest out of a and b.
                 let closest = if b_score > a_score { b_point } else { a_point };
                 if closest == 1 {
-                    contribute(1.0, -1.0, 0.0);
-                    contribute(1.0, 0.0, -1.0);
+                    value += contribute(1.0, -1.0, 0.0);
+                    value += contribute(1.0, 0.0, -1.0);
                 } else if closest == 2 {
-                    contribute(-1.0, 1.0, 0.0);
-                    contribute(0.0, 1.0, -1.0);
+                    value += contribute(-1.0, 1.0, 0.0);
+                    value += contribute(0.0, 1.0, -1.0);
                     // closest == 4
-                    contribute(-1.0, 0.0, 1.0);
-                    contribute(0.0, -1.0, 1.0);
+                    value += contribute(-1.0, 0.0, 1.0);
+                    value += contribute(0.0, -1.0, 1.0);
                 }
             } else {
                 // (0, 0, 0) is not one of the closest two tetrahedral vertices.
                 // Our two extra vertices are determined by the closest two.
                 let closest = a_point | b_point;
                 if closest == 3 {
-                    contribute(1.0, 1.0, 0.0);
-                    contribute(1.0, 1.0, -1.0);
+                    value += contribute(1.0, 1.0, 0.0);
+                    value += contribute(1.0, 1.0, -1.0);
                 } else if closest == 5 {
-                    contribute(1.0, 0.0, 1.0);
-                    contribute(1.0, -1.0, 1.0);
+                    value += contribute(1.0, 0.0, 1.0);
+                    value += contribute(1.0, -1.0, 1.0);
                 } else {
                     // closest == 6
-                    contribute(0.0, 1.0, 1.0);
-                    contribute(-1.0, 1.0, 1.0);
+                    value += contribute(0.0, 1.0, 1.0);
+                    value += contribute(-1.0, 1.0, 1.0);
                 }
             }
 
-            contribute(0.0, 0.0, 0.0);
-            contribute(1.0, 0.0, 0.0);
-            contribute(0.0, 1.0, 0.0);
-            contribute(0.0, 0.0, 1.0);
+            value += contribute(0.0, 0.0, 0.0);
+            value += contribute(1.0, 0.0, 0.0);
+            value += contribute(0.0, 1.0, 0.0);
+            value += contribute(0.0, 0.0, 1.0);
         } else if in_sum >= 2.0 {
             // Inside the tetrahedron (3-Simplex) at (1, 1, 1)
 
@@ -161,37 +160,37 @@ impl OpenSimplexNoise3D {
                 // Our other closest vertex is the closest out of a and b.
                 let closest = if b_score < a_score { b_point } else { a_point };
                 if closest == 3 {
-                    contribute(2.0, 1.0, 0.0);
-                    contribute(1.0, 2.0, 0.0);
+                    value += contribute(2.0, 1.0, 0.0);
+                    value += contribute(1.0, 2.0, 0.0);
                 } else if closest == 5 {
-                    contribute(2.0, 0.0, 1.0);
-                    contribute(1.0, 0.0, 2.0);
+                    value += contribute(2.0, 0.0, 1.0);
+                    value += contribute(1.0, 0.0, 2.0);
                 } else {
                     // closest == 6
-                    contribute(0.0, 2.0, 1.0);
-                    contribute(0.0, 1.0, 2.0);
+                    value += contribute(0.0, 2.0, 1.0);
+                    value += contribute(0.0, 1.0, 2.0);
                 }
             } else {
                 // (1, 1, 1) is not one of the closest two tetrahedral vertices.
                 // Our two extra vertices are determined by the closest two.
                 let closest = a_point & b_point;
                 if closest == 1 {
-                    contribute(1.0, 0.0, 0.0);
-                    contribute(2.0, 0.0, 0.0);
+                    value += contribute(1.0, 0.0, 0.0);
+                    value += contribute(2.0, 0.0, 0.0);
                 } else if closest == 2 {
-                    contribute(0.0, 1.0, 0.0);
-                    contribute(0.0, 2.0, 0.0);
+                    value += contribute(0.0, 1.0, 0.0);
+                    value += contribute(0.0, 2.0, 0.0);
                 } else {
                     // closest == 4
-                    contribute(0.0, 0.0, 1.0);
-                    contribute(0.0, 0.0, 2.0);
+                    value += contribute(0.0, 0.0, 1.0);
+                    value += contribute(0.0, 0.0, 2.0);
                 }
             }
 
-            contribute(1.0, 1.0, 0.0);
-            contribute(1.0, 0.0, 1.0);
-            contribute(0.0, 1.0, 1.0);
-            contribute(1.0, 1.0, 1.0);
+            value += contribute(1.0, 1.0, 0.0);
+            value += contribute(1.0, 0.0, 1.0);
+            value += contribute(0.0, 1.0, 1.0);
+            value += contribute(1.0, 1.0, 1.0);
         } else {
             // Inside the octahedron (Rectified 3-Simplex) in between.
             let a_score;
@@ -254,33 +253,33 @@ impl OpenSimplexNoise3D {
                     // Both closest points on (1, 1, 1) side
 
                     // One of the two extra points is (1, 1, 1)
-                    contribute(1.0, 1.0, 1.0);
+                    value += contribute(1.0, 1.0, 1.0);
 
                     // Other extra point is based on the shared axis.
                     let closest = a_point & b_point;
                     if closest == 1 {
-                        contribute(2.0, 0.0, 0.0);
+                        value += contribute(2.0, 0.0, 0.0);
                     } else if closest == 2 {
-                        contribute(0.0, 2.0, 0.0);
+                        value += contribute(0.0, 2.0, 0.0);
                     } else {
                         // closest == 4
-                        contribute(0.0, 0.0, 2.0);
+                        value += contribute(0.0, 0.0, 2.0);
                     }
                 } else {
                     // Both closest points on (0, 0, 0) side
 
                     // One of the two extra points is (0, 0, 0)
-                    contribute(0.0, 0.0, 0.0);
+                    value += contribute(0.0, 0.0, 0.0);
 
                     // Other extra point is based on the omitted axis.
                     let closest = a_point | b_point;
                     if closest == 3 {
-                        contribute(1.0, 1.0, -1.0);
+                        value += contribute(1.0, 1.0, -1.0);
                     } else if closest == 5 {
-                        contribute(1.0, -1.0, 1.0);
+                        value += contribute(1.0, -1.0, 1.0);
                     } else {
                         // closest == 6
-                        contribute(-1.0, 1.0, 1.0);
+                        value += contribute(-1.0, 1.0, 1.0);
                     }
                 }
             } else {
@@ -293,30 +292,30 @@ impl OpenSimplexNoise3D {
 
                 // One contribution is a permutation of (1, 1, -1)
                 if c1 == 3 {
-                    contribute(1.0, 1.0, -1.0);
+                    value += contribute(1.0, 1.0, -1.0);
                 } else if c1 == 5 {
-                    contribute(1.0, -1.0, 1.0);
+                    value += contribute(1.0, -1.0, 1.0);
                 } else {
                     // c1 == 6
-                    contribute(-1.0, 1.0, 1.0);
+                    value += contribute(-1.0, 1.0, 1.0);
                 }
                 // One contribution is a permutation of (0, 0, 2)
                 if c2 == 1 {
-                    contribute(2.0, 0.0, 0.0);
+                    value += contribute(2.0, 0.0, 0.0);
                 } else if c2 == 2 {
-                    contribute(0.0, 2.0, 0.0);
+                    value += contribute(0.0, 2.0, 0.0);
                 } else {
                     // c2 == 4
-                    contribute(0.0, 0.0, 2.0);
+                    value += contribute(0.0, 0.0, 2.0);
                 }
             }
 
-            contribute(1.0, 0.0, 0.0);
-            contribute(0.0, 1.0, 0.0);
-            contribute(0.0, 0.0, 1.0);
-            contribute(1.0, 1.0, 0.0);
-            contribute(1.0, 0.0, 1.0);
-            contribute(0.0, 1.0, 1.0);
+            value += contribute(1.0, 0.0, 0.0);
+            value += contribute(0.0, 1.0, 0.0);
+            value += contribute(0.0, 0.0, 1.0);
+            value += contribute(1.0, 1.0, 0.0);
+            value += contribute(1.0, 0.0, 1.0);
+            value += contribute(0.0, 1.0, 1.0);
         }
 
         value / NORMALIZING_SCALAR

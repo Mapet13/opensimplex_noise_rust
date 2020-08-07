@@ -32,11 +32,8 @@ impl NoiseEvaluator<Vec2<f64>> for OpenSimplexNoise2D {
         let point = GRAD_TABLE_2D[index1 as usize];
         point.x * delta.x + point.y * delta.y
     }
-}
 
-impl OpenSimplexNoise2D {
-    pub fn eval_2d(x: f64, y: f64, perm: &[i64; PSIZE as usize]) -> f64 {
-        let input = Vec2::new(x, y);
+    fn eval(input: Vec2<f64>, perm: &[i64; PSIZE as usize]) -> f64 {
         let stretch: Vec2<f64> = input + (Self::STRETCH_POINT * input.sum());
         let grid = stretch.map(utils::floor).map(utils::to_f64);
 
@@ -44,58 +41,63 @@ impl OpenSimplexNoise2D {
         let ins = stretch - grid;
         let origin = input - squashed;
 
-        OpenSimplexNoise2D::eval(grid, origin, ins, perm)
+        OpenSimplexNoise2D::get_value(grid, origin, ins, perm)
     }
+}
 
-    fn eval(
+impl OpenSimplexNoise2D {
+    fn get_value(
         grid: Vec2<f64>,
         origin: Vec2<f64>,
         ins: Vec2<f64>,
         perm: &[i64; PSIZE as usize],
     ) -> f64 {
+        let mut value = 0.0;
         let contribute = |x, y| -> f64 {
             utils::contribute::<OpenSimplexNoise2D, Vec2<f64>>(Vec2::new(x, y), origin, grid, perm)
         };
 
-        let mut value = 0.0;
         value += contribute(1.0, 0.0);
         value += contribute(0.0, 1.0);
 
-        let in_sum = ins.sum();
-        if in_sum <= 1.0 {
-            // Inside the triangle (2-Simplex) at (0, 0)
-            let zins = 1.0 - in_sum;
-            if zins > ins.x || zins > ins.y {
-                // (0, 0) is one of the closest two triangular vertices
-                if ins.x > ins.y {
-                    value += contribute(1.0, -1.0);
-                } else {
-                    value += contribute(-1.0, 1.0);
-                }
-            } else {
-                // (1, 0) and (0, 1) are the closest two vertices.
-                value += contribute(1.0, 1.0);
-            }
-
-            value += contribute(0.0, 0.0);
-        } else {
-            // Inside the triangle (2-Simplex) at (1, 1)
-            let zins = 2.0 - in_sum;
-            if zins < ins.x || zins < ins.y {
-                // (0, 0) is one of the closest two triangular vertices
-                if ins.x > ins.y {
-                    value += contribute(2.0, 0.0);
-                } else {
-                    value += contribute(0.0, 2.0);
-                }
-            } else {
-                // (1, 0) and (0, 1) are the closest two vertices.
-                value += contribute(0.0, 0.0);
-            }
-
-            value += contribute(1.0, 1.0);
-        }
+        value += OpenSimplexNoise2D::evaluate_inside_triangle(ins, contribute);
 
         value / NORMALIZING_SCALAR
+    }
+
+    fn evaluate_inside_triangle(ins: Vec2<f64>,contribute: impl Fn(f64, f64) -> f64) -> f64 {
+        let in_sum = ins.sum();
+        let factor_point = if in_sum <= 1.0 {
+            Vec2::new(0.0, 0.0)
+        } else {
+            Vec2::new(1.0, 1.0)
+        };
+        
+        OpenSimplexNoise2D::evaluate_inside_triangle_at(factor_point, in_sum, ins, contribute)
+    }
+
+    fn evaluate_inside_triangle_at(
+        factor_point: Vec2<f64>,
+        in_sum: f64,
+        ins: Vec2<f64>,
+        contribute: impl Fn(f64, f64) -> f64,
+    ) -> f64 {
+        let zins = 1.0 + factor_point.x - in_sum;
+        let mut value = 0.0;
+        if zins > ins.x || zins > ins.y {
+            // (0, 0) is one of the closest two triangular vertices
+            if ins.x > ins.y {
+                value += contribute(1.0 + factor_point.x, -1.0 + factor_point.y);
+            } else {
+                value += contribute(-1.0 + factor_point.x, 1.0 + factor_point.y);
+            }
+        } else {
+            // (1, 0) and (0, 1) are the closest two vertices.
+            value += contribute(1.0 - factor_point.x, 1.0 - factor_point.y);
+        }
+
+        value += contribute(0.0 + factor_point.x, 0.0 + factor_point.y);
+
+        value
     }
 }
