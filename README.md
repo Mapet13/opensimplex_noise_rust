@@ -6,7 +6,7 @@
 This Rust port currently supports 2D and 3D noise.
 
 ### Examples:
-[![example](examples/demo_3d/examples/noise_3d_example.gif)](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo/)
+[![example](examples/demo_3d/examples/noise_3d_example.gif)](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo_3d)
 
 ### Usage:
 ```rust
