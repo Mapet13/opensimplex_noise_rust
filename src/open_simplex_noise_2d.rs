@@ -44,15 +44,13 @@ impl NoiseEvaluator<Vec2<f64>> for OpenSimplexNoise2D {
 
 impl OpenSimplexNoise2D {
     fn get_value(grid: Vec2<f64>, origin: Vec2<f64>, ins: Vec2<f64>, perm: &PermTable) -> f64 {
-        let mut value = 0.0;
         let contribute = |x, y| -> f64 {
             utils::contribute::<OpenSimplexNoise2D, Vec2<f64>>(Vec2::new(x, y), origin, grid, perm)
         };
 
-        value += contribute(1.0, 0.0);
-        value += contribute(0.0, 1.0);
-
-        value += OpenSimplexNoise2D::evaluate_inside_triangle(ins, contribute);
+        let value = contribute(1.0, 0.0)
+            + contribute(0.0, 1.0)
+            + OpenSimplexNoise2D::evaluate_inside_triangle(ins, contribute);
 
         value / NORMALIZING_SCALAR
     }
