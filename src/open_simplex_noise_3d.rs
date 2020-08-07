@@ -1,8 +1,7 @@
-use super::vector::{vec3::Vec3, VecMethods};
-
 use super::utils;
+use super::vector::{vec3::Vec3, VecMethods};
 use super::NoiseEvaluator;
-use super::{PermTable, vector::vec2::Vec2};
+use super::{vector::vec2::Vec2, PermTable};
 
 const STRETCH: f64 = -1.0 / 6.0; // (1 / sqrt(3 + 1) - 1) / 3
 const SQUISH: f64 = 1.0 / 3.0; // (sqrt(3 + 1) - 1) / 3
@@ -64,12 +63,7 @@ impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
 }
 
 impl OpenSimplexNoise3D {
-    fn get_value(
-        grid: Vec3<f64>,
-        origin: Vec3<f64>,
-        ins: Vec3<f64>,
-        perm: &PermTable,
-    ) -> f64 {
+    fn get_value(grid: Vec3<f64>, origin: Vec3<f64>, ins: Vec3<f64>, perm: &PermTable) -> f64 {
         let contribute = |x: f64, y: f64, z: f64| {
             utils::contribute::<OpenSimplexNoise3D, Vec3<f64>>(
                 Vec3::new(x, y, z),

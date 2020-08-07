@@ -20,7 +20,7 @@ pub fn contribute<NoiseEvaluatorType: NoiseEvaluator<Vec>, Vec: VecType<f64>>(
 
 pub fn floor(x: f64) -> i64 {
     x.floor() as i64
-}  
+}
 
 pub fn to_f64(x: i64) -> f64 {
     x as f64

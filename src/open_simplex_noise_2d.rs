@@ -1,6 +1,5 @@
 use super::utils;
 use super::vector::{vec2::Vec2, VecMethods};
-
 use super::NoiseEvaluator;
 use super::PermTable;
 
@@ -46,12 +45,7 @@ impl NoiseEvaluator<Vec2<f64>> for OpenSimplexNoise2D {
 }
 
 impl OpenSimplexNoise2D {
-    fn get_value(
-        grid: Vec2<f64>,
-        origin: Vec2<f64>,
-        ins: Vec2<f64>,
-        perm: &PermTable,
-    ) -> f64 {
+    fn get_value(grid: Vec2<f64>, origin: Vec2<f64>, ins: Vec2<f64>, perm: &PermTable) -> f64 {
         let mut value = 0.0;
         let contribute = |x, y| -> f64 {
             utils::contribute::<OpenSimplexNoise2D, Vec2<f64>>(Vec2::new(x, y), origin, grid, perm)
@@ -65,14 +59,13 @@ impl OpenSimplexNoise2D {
         value / NORMALIZING_SCALAR
     }
 
-    fn evaluate_inside_triangle(ins: Vec2<f64>,contribute: impl Fn(f64, f64) -> f64) -> f64 {
+    fn evaluate_inside_triangle(ins: Vec2<f64>, contribute: impl Fn(f64, f64) -> f64) -> f64 {
         let in_sum = ins.sum();
         let factor_point = if in_sum <= 1.0 {
             Vec2::new(0.0, 0.0)
         } else {
             Vec2::new(1.0, 1.0)
         };
-        
         OpenSimplexNoise2D::evaluate_inside_triangle_at(factor_point, in_sum, ins, contribute)
     }
 
