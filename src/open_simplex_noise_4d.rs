@@ -102,7 +102,7 @@ impl NoiseEvaluator<Vec4<f64>> for OpenSimplexNoise4D {
 
 impl OpenSimplexNoise4D {
     fn get_value(grid: Vec4<f64>, origin: Vec4<f64>, ins: Vec4<f64>, perm: &PermTable) -> f64 {
-        let value = 0.0;
+        let mut value = 0.0;
         
         let contribute = |x: f64, y: f64, z: f64, w: f64| {
             utils::contribute::<OpenSimplexNoise4D, Vec4<f64>>(
@@ -146,60 +146,60 @@ impl OpenSimplexNoise4D {
                 // Our other closest vertex is the closest out of a and b.
                 let closest = if b_score > a_score { b_point } else { a_point };
                 if closest == 1 {
-                    contribute(1.0, -1.0, 0.0, 0.0);
-                    contribute(1.0, 0.0, -1.0, 0.0);
-                    contribute(1.0, 0.0, 0.0, -1.0);
+                    value += contribute(1.0, -1.0, 0.0, 0.0);
+                    value += contribute(1.0, 0.0, -1.0, 0.0);
+                    value += contribute(1.0, 0.0, 0.0, -1.0);
                 } else if closest == 2 {
-                    contribute(-1.0, 1.0, 0.0, 0.0);
-                    contribute(0.0, 1.0, -1.0, 0.0);
-                    contribute(0.0, 1.0, 0.0, -1.0);
+                    value += contribute(-1.0, 1.0, 0.0, 0.0);
+                    value += contribute(0.0, 1.0, -1.0, 0.0);
+                    value += contribute(0.0, 1.0, 0.0, -1.0);
                 } else if closest == 4 {
-                    contribute(-1.0, 0.0, 1.0, 0.0);
-                    contribute(0.0, -1.0, 1.0, 0.0);
-                    contribute(0.0, 0.0, 1.0, -1.0);
+                    value += contribute(-1.0, 0.0, 1.0, 0.0);
+                    value += contribute(0.0, -1.0, 1.0, 0.0);
+                    value += contribute(0.0, 0.0, 1.0, -1.0);
                 } else {
                     // closest == 8
-                    contribute(-1.0, 0.0, 0.0, 1.0);
-                    contribute(0.0, -1.0, 0.0, 1.0);
-                    contribute(0.0, 0.0, -1.0, 1.0);
+                    value += contribute(-1.0, 0.0, 0.0, 1.0);
+                    value += contribute(0.0, -1.0, 0.0, 1.0);
+                    value += contribute(0.0, 0.0, -1.0, 1.0);
                 }
             } else {
                 // (0, 0, 0, 0) is not one of the closest two pentachoron vertices.
                 // Our three extra vertices are determined by the closest two.
                 let closest = a_point | b_point;
                 if closest == 3 {
-                    contribute(1.0, 1.0, 0.0, 0.0);
-                    contribute(1.0, 1.0, -1.0, 0.0);
-                    contribute(1.0, 1.0, 0.0, -1.0);
+                    value += contribute(1.0, 1.0, 0.0, 0.0);
+                    value += contribute(1.0, 1.0, -1.0, 0.0);
+                    value += contribute(1.0, 1.0, 0.0, -1.0);
                 } else if closest == 5 {
-                    contribute(1.0, 0.0, 1.0, 0.0);
-                    contribute(1.0, -1.0, 1.0, 0.0);
-                    contribute(1.0, 0.0, 1.0, -1.0);
+                    value += contribute(1.0, 0.0, 1.0, 0.0);
+                    value += contribute(1.0, -1.0, 1.0, 0.0);
+                    value += contribute(1.0, 0.0, 1.0, -1.0);
                 } else if closest == 6 {
-                    contribute(0.0, 1.0, 1.0, 0.0);
-                    contribute(-1.0, 1.0, 1.0, 0.0);
-                    contribute(0.0, 1.0, 1.0, -1.0);
+                    value += contribute(0.0, 1.0, 1.0, 0.0);
+                    value += contribute(-1.0, 1.0, 1.0, 0.0);
+                    value += contribute(0.0, 1.0, 1.0, -1.0);
                 } else if closest == 9 {
-                    contribute(1.0, 0.0, 0.0, 1.0);
-                    contribute(1.0, -1.0, 0.0, 1.0);
-                    contribute(1.0, 0.0, -1.0, 1.0);
+                    value += contribute(1.0, 0.0, 0.0, 1.0);
+                    value += contribute(1.0, -1.0, 0.0, 1.0);
+                    value += contribute(1.0, 0.0, -1.0, 1.0);
                 } else if closest == 10 {
-                    contribute(0.0, 1.0, 0.0, 1.0);
-                    contribute(-1.0, 1.0, 0.0, 1.0);
-                    contribute(0.0, 1.0, -1.0, 1.0);
+                    value += contribute(0.0, 1.0, 0.0, 1.0);
+                    value += contribute(-1.0, 1.0, 0.0, 1.0);
+                    value += contribute(0.0, 1.0, -1.0, 1.0);
                 } else {
                     // closest == 12
-                    contribute(0.0, 0.0, 1.0, 1.0);
-                    contribute(-1.0, 0.0, 1.0, 1.0);
-                    contribute(0.0, -1.0, 1.0, 1.0);
+                    value += contribute(0.0, 0.0, 1.0, 1.0);
+                    value += contribute(-1.0, 0.0, 1.0, 1.0);
+                    value += contribute(0.0, -1.0, 1.0, 1.0);
                 }
             }
 
-            contribute(0.0, 0.0, 0.0, 0.0);
-            contribute(1.0, 0.0, 0.0, 0.0);
-            contribute(0.0, 1.0, 0.0, 0.0);
-            contribute(0.0, 0.0, 1.0, 0.0);
-            contribute(0.0, 0.0, 0.0, 1.0);
+            value += contribute(0.0, 0.0, 0.0, 0.0);
+            value += contribute(1.0, 0.0, 0.0, 0.0);
+            value += contribute(0.0, 1.0, 0.0, 0.0);
+            value += contribute(0.0, 0.0, 1.0, 0.0);
+            value += contribute(0.0, 0.0, 0.0, 1.0);
         } else if in_sum >= 3.0 {
             // We're inside the pentachoron (4-Simplex) at (1, 1, 1, 1)
             // Determine which two of (1, 1, 1, 0), (1, 1, 0, 1), (1, 0, 1, 1), (0, 1, 1, 1) are closest.
@@ -230,60 +230,60 @@ impl OpenSimplexNoise4D {
                 // Our other closest vertex is the closest out of a and b.
                 let closest = if b_score < a_score { b_point } else { a_point };
                 if closest == 7 {
-                    contribute(2.0, 1.0, 1.0, 0.0);
-                    contribute(1.0, 2.0, 1.0, 0.0);
-                    contribute(1.0, 1.0, 2.0, 0.0);
+                    value += contribute(2.0, 1.0, 1.0, 0.0);
+                    value += contribute(1.0, 2.0, 1.0, 0.0);
+                    value += contribute(1.0, 1.0, 2.0, 0.0);
                 } else if closest == 11 {
-                    contribute(2.0, 1.0, 0.0, 1.0);
-                    contribute(1.0, 2.0, 0.0, 1.0);
-                    contribute(1.0, 1.0, 0.0, 2.0);
+                    value += contribute(2.0, 1.0, 0.0, 1.0);
+                    value += contribute(1.0, 2.0, 0.0, 1.0);
+                    value += contribute(1.0, 1.0, 0.0, 2.0);
                 } else if closest == 13 {
-                    contribute(2.0, 0.0, 1.0, 1.0);
-                    contribute(1.0, 0.0, 2.0, 1.0);
-                    contribute(1.0, 0.0, 1.0, 2.0);
+                    value += contribute(2.0, 0.0, 1.0, 1.0);
+                    value += contribute(1.0, 0.0, 2.0, 1.0);
+                    value += contribute(1.0, 0.0, 1.0, 2.0);
                 } else {
                     // closest == 14
-                    contribute(0.0, 2.0, 1.0, 1.0);
-                    contribute(0.0, 1.0, 2.0, 1.0);
-                    contribute(0.0, 1.0, 1.0, 2.0);
+                    value += contribute(0.0, 2.0, 1.0, 1.0);
+                    value += contribute(0.0, 1.0, 2.0, 1.0);
+                    value += contribute(0.0, 1.0, 1.0, 2.0);
                 }
             } else {
                 // (1,1,1,1) is not one of the closest two pentachoron vertices.
                 // Our three extra vertices are determined by the closest two.
                 let closest = a_point & b_point;
                 if closest == 3 {
-                    contribute(1.0, 1.0, 0.0, 0.0);
-                    contribute(2.0, 1.0, 0.0, 0.0);
-                    contribute(1.0, 2.0, 0.0, 0.0);
+                    value += contribute(1.0, 1.0, 0.0, 0.0);
+                    value += contribute(2.0, 1.0, 0.0, 0.0);
+                    value += contribute(1.0, 2.0, 0.0, 0.0);
                 } else if closest == 5 {
-                    contribute(1.0, 0.0, 1.0, 0.0);
-                    contribute(2.0, 0.0, 1.0, 0.0);
-                    contribute(1.0, 0.0, 2.0, 0.0);
+                    value += contribute(1.0, 0.0, 1.0, 0.0);
+                    value += contribute(2.0, 0.0, 1.0, 0.0);
+                    value += contribute(1.0, 0.0, 2.0, 0.0);
                 } else if closest == 6 {
-                    contribute(0.0, 1.0, 1.0, 0.0);
-                    contribute(0.0, 2.0, 1.0, 0.0);
-                    contribute(0.0, 1.0, 2.0, 0.0);
+                    value += contribute(0.0, 1.0, 1.0, 0.0);
+                    value += contribute(0.0, 2.0, 1.0, 0.0);
+                    value += contribute(0.0, 1.0, 2.0, 0.0);
                 } else if closest == 9 {
-                    contribute(1.0, 0.0, 0.0, 1.0);
-                    contribute(2.0, 0.0, 0.0, 1.0);
-                    contribute(1.0, 0.0, 0.0, 2.0);
+                    value += contribute(1.0, 0.0, 0.0, 1.0);
+                    value += contribute(2.0, 0.0, 0.0, 1.0);
+                    value += contribute(1.0, 0.0, 0.0, 2.0);
                 } else if closest == 10 {
-                    contribute(0.0, 1.0, 0.0, 1.0);
-                    contribute(0.0, 2.0, 0.0, 1.0);
-                    contribute(0.0, 1.0, 0.0, 2.0);
+                    value += contribute(0.0, 1.0, 0.0, 1.0);
+                    value += contribute(0.0, 2.0, 0.0, 1.0);
+                    value += contribute(0.0, 1.0, 0.0, 2.0);
                 } else {
                     // closest == 12
-                    contribute(0.0, 0.0, 1.0, 1.0);
-                    contribute(0.0, 0.0, 2.0, 1.0);
-                    contribute(0.0, 0.0, 1.0, 2.0);
+                    value += contribute(0.0, 0.0, 1.0, 1.0);
+                    value += contribute(0.0, 0.0, 2.0, 1.0);
+                    value += contribute(0.0, 0.0, 1.0, 2.0);
                 }
             }
 
-            contribute(1.0, 1.0, 1.0, 0.0);
-            contribute(1.0, 1.0, 0.0, 1.0);
-            contribute(1.0, 0.0, 1.0, 1.0);
-            contribute(0.0, 1.0, 1.0, 1.0);
-            contribute(1.0, 1.0, 1.0, 1.0);
+            value += contribute(1.0, 1.0, 1.0, 0.0);
+            value += contribute(1.0, 1.0, 0.0, 1.0);
+            value += contribute(1.0, 0.0, 1.0, 1.0);
+            value += contribute(0.0, 1.0, 1.0, 1.0);
+            value += contribute(1.0, 1.0, 1.0, 1.0);
         } else if in_sum <= 2.0 {
             // We're inside the first dispentachoron (Rectified 4-Simplex)
             let mut a_score;
@@ -385,58 +385,58 @@ impl OpenSimplexNoise4D {
                     // Both closest points on the bigger side
                     let c1 = a_point | b_point;
                     if c1 == 7 {
-                        contribute(1.0, 1.0, 1.0, 0.0);
-                        contribute(1.0, 1.0, 1.0, -1.0);
+                        value += contribute(1.0, 1.0, 1.0, 0.0);
+                        value += contribute(1.0, 1.0, 1.0, -1.0);
                     } else if c1 == 11 {
-                        contribute(1.0, 1.0, 0.0, 1.0);
-                        contribute(1.0, 1.0, -1.0, 1.0);
+                        value += contribute(1.0, 1.0, 0.0, 1.0);
+                        value += contribute(1.0, 1.0, -1.0, 1.0);
                     } else if c1 == 13 {
-                        contribute(1.0, 0.0, 1.0, 1.0);
-                        contribute(1.0, -1.0, 1.0, 1.0);
+                        value += contribute(1.0, 0.0, 1.0, 1.0);
+                        value += contribute(1.0, -1.0, 1.0, 1.0);
                     } else {
                         // c1 == 14
-                        contribute(0.0, 1.0, 1.0, 1.0);
-                        contribute(-1.0, 1.0, 1.0, 1.0);
+                        value += contribute(0.0, 1.0, 1.0, 1.0);
+                        value += contribute(-1.0, 1.0, 1.0, 1.0);
                     }
 
                     // One combination is a permutation of (0, 0, 0, 2) based on c2
                     let c2 = a_point & b_point;
                     if c2 == 1 {
-                        contribute(2.0, 0.0, 0.0, 0.0);
+                        value += contribute(2.0, 0.0, 0.0, 0.0);
                     } else if c2 == 2 {
-                        contribute(0.0, 2.0, 0.0, 0.0);
+                        value += contribute(0.0, 2.0, 0.0, 0.0);
                     } else if c2 == 4 {
-                        contribute(0.0, 0.0, 2.0, 0.0);
+                        value += contribute(0.0, 0.0, 2.0, 0.0);
                     } else {
                         // c2 == 8
-                        contribute(0.0, 0.0, 0.0, 2.0);
+                        value += contribute(0.0, 0.0, 0.0, 2.0);
                     }
                 } else {
                     // Both closest points on the smaller side
                     // One of the two extra points is (0, 0, 0, 0)
-                    contribute(0.0, 0.0, 0.0, 0.0);
+                    value += contribute(0.0, 0.0, 0.0, 0.0);
 
                     // Other two points are based on the omitted axes.
                     let closest = a_point | b_point;
                     if closest == 3 {
-                        contribute(1.0, 1.0, -1.0, 0.0);
-                        contribute(1.0, 1.0, 0.0, -1.0);
+                        value += contribute(1.0, 1.0, -1.0, 0.0);
+                        value += contribute(1.0, 1.0, 0.0, -1.0);
                     } else if closest == 5 {
-                        contribute(1.0, -1.0, 1.0, 0.0);
-                        contribute(1.0, 0.0, 1.0, -1.0);
+                        value += contribute(1.0, -1.0, 1.0, 0.0);
+                        value += contribute(1.0, 0.0, 1.0, -1.0);
                     } else if closest == 6 {
-                        contribute(-1.0, 1.0, 1.0, 0.0);
-                        contribute(0.0, 1.0, 1.0, -1.0);
+                        value += contribute(-1.0, 1.0, 1.0, 0.0);
+                        value += contribute(0.0, 1.0, 1.0, -1.0);
                     } else if closest == 9 {
-                        contribute(1.0, -1.0, 0.0, 1.0);
-                        contribute(1.0, 0.0, -1.0, 1.0);
+                        value += contribute(1.0, -1.0, 0.0, 1.0);
+                        value += contribute(1.0, 0.0, -1.0, 1.0);
                     } else if closest == 10 {
-                        contribute(-1.0, 1.0, 0.0, 1.0);
-                        contribute(0.0, 1.0, -1.0, 1.0);
+                        value += contribute(-1.0, 1.0, 0.0, 1.0);
+                        value += contribute(0.0, 1.0, -1.0, 1.0);
                     } else {
                         // closest == 12
-                        contribute(-1.0, 0.0, 1.0, 1.0);
-                        contribute(0.0, -1.0, 1.0, 1.0);
+                        value += contribute(-1.0, 0.0, 1.0, 1.0);
+                        value += contribute(0.0, -1.0, 1.0, 1.0);
                     }
                 }
             } else {
@@ -449,48 +449,48 @@ impl OpenSimplexNoise4D {
 
                 // Two contributions are the bigger-sided point with each 0 replaced with -1.
                 if c1 == 3 {
-                    contribute(1.0, 1.0, -1.0, 0.0);
-                    contribute(1.0, 1.0, 0.0, -1.0);
+                    value += contribute(1.0, 1.0, -1.0, 0.0);
+                    value += contribute(1.0, 1.0, 0.0, -1.0);
                 } else if c1 == 5 {
-                    contribute(1.0, -1.0, 1.0, 0.0);
-                    contribute(1.0, 0.0, 1.0, -1.0);
+                    value += contribute(1.0, -1.0, 1.0, 0.0);
+                    value += contribute(1.0, 0.0, 1.0, -1.0);
                 } else if c1 == 6 {
-                    contribute(-1.0, 1.0, 1.0, 0.0);
-                    contribute(0.0, 1.0, 1.0, -1.0);
+                    value += contribute(-1.0, 1.0, 1.0, 0.0);
+                    value += contribute(0.0, 1.0, 1.0, -1.0);
                 } else if c1 == 9 {
-                    contribute(1.0, -1.0, 0.0, 1.0);
-                    contribute(1.0, 0.0, -1.0, 1.0);
+                    value += contribute(1.0, -1.0, 0.0, 1.0);
+                    value += contribute(1.0, 0.0, -1.0, 1.0);
                 } else if c1 == 10 {
-                    contribute(-1.0, 1.0, 0.0, 1.0);
-                    contribute(0.0, 1.0, -1.0, 1.0);
+                    value += contribute(-1.0, 1.0, 0.0, 1.0);
+                    value += contribute(0.0, 1.0, -1.0, 1.0);
                 } else if c1 == 12 {
-                    contribute(-1.0, 0.0, 1.0, 1.0);
-                    contribute(0.0, -1.0, 1.0, 1.0);
+                    value += contribute(-1.0, 0.0, 1.0, 1.0);
+                    value += contribute(0.0, -1.0, 1.0, 1.0);
                 }
 
                 // One contribution is a permutation of (0, 0, 0, 2) based on the smaller-sided point
                 if c2 == 1 {
-                    contribute(2.0, 0.0, 0.0, 0.0);
+                    value += contribute(2.0, 0.0, 0.0, 0.0);
                 } else if c2 == 2 {
-                    contribute(0.0, 2.0, 0.0, 0.0);
+                    value += contribute(0.0, 2.0, 0.0, 0.0);
                 } else if c2 == 4 {
-                    contribute(0.0, 0.0, 2.0, 0.0);
+                    value += contribute(0.0, 0.0, 2.0, 0.0);
                 } else {
                     // c2 == 8
-                    contribute(0.0, 0.0, 0.0, 2.0);
+                    value += contribute(0.0, 0.0, 0.0, 2.0);
                 }
             }
 
-            contribute(1.0, 0.0, 0.0, 0.0);
-            contribute(0.0, 1.0, 0.0, 0.0);
-            contribute(0.0, 0.0, 1.0, 0.0);
-            contribute(0.0, 0.0, 0.0, 1.0);
-            contribute(1.0, 1.0, 0.0, 0.0);
-            contribute(1.0, 0.0, 1.0, 0.0);
-            contribute(1.0, 0.0, 0.0, 1.0);
-            contribute(0.0, 1.0, 1.0, 0.0);
-            contribute(0.0, 1.0, 0.0, 1.0);
-            contribute(0.0, 0.0, 1.0, 1.0);
+            value += contribute(1.0, 0.0, 0.0, 0.0);
+            value += contribute(0.0, 1.0, 0.0, 0.0);
+            value += contribute(0.0, 0.0, 1.0, 0.0);
+            value += contribute(0.0, 0.0, 0.0, 1.0);
+            value += contribute(1.0, 1.0, 0.0, 0.0);
+            value += contribute(1.0, 0.0, 1.0, 0.0);
+            value += contribute(1.0, 0.0, 0.0, 1.0);
+            value += contribute(0.0, 1.0, 1.0, 0.0);
+            value += contribute(0.0, 1.0, 0.0, 1.0);
+            value += contribute(0.0, 0.0, 1.0, 1.0);
         } else {
             // We're inside the second dispentachoron (Rectified 4-Simplex)
             let mut a_score;
@@ -595,59 +595,59 @@ impl OpenSimplexNoise4D {
                     // Two contributions are permutations of (0, 0, 0, 1) and (0, 0, 0, 2) based on c1
                     let c1 = a_point & b_point;
                     if c1 == 1 {
-                        contribute(1.0, 0.0, 0.0, 0.0);
-                        contribute(2.0, 0.0, 0.0, 0.0);
+                        value += contribute(1.0, 0.0, 0.0, 0.0);
+                        value += contribute(2.0, 0.0, 0.0, 0.0);
                     } else if c1 == 2 {
-                        contribute(0.0, 1.0, 0.0, 0.0);
-                        contribute(0.0, 2.0, 0.0, 0.0);
+                        value += contribute(0.0, 1.0, 0.0, 0.0);
+                        value += contribute(0.0, 2.0, 0.0, 0.0);
                     } else if c1 == 4 {
-                        contribute(0.0, 0.0, 1.0, 0.0);
-                        contribute(0.0, 0.0, 2.0, 0.0);
+                        value += contribute(0.0, 0.0, 1.0, 0.0);
+                        value += contribute(0.0, 0.0, 2.0, 0.0);
                     } else {
                         // c2 == 8
-                        contribute(0.0, 0.0, 0.0, 1.0);
-                        contribute(0.0, 0.0, 0.0, 2.0);
+                        value += contribute(0.0, 0.0, 0.0, 1.0);
+                        value += contribute(0.0, 0.0, 0.0, 2.0);
                     }
 
                     // One contribution is a permutation of (1, 1, 1, -1) based on c2
                     let c2 = a_point | b_point;
 
                     if (c2 & 0x01) == 0 {
-                        contribute(-1.0, 1.0, 1.0, 1.0);
+                        value += contribute(-1.0, 1.0, 1.0, 1.0);
                     } else if (c2 & 0x02) == 0 {
-                        contribute(1.0, -1.0, 1.0, 1.0);
+                        value += contribute(1.0, -1.0, 1.0, 1.0);
                     } else if (c2 & 0x04) == 0 {
-                        contribute(1.0, 1.0, -1.0, 1.0);
+                        value += contribute(1.0, 1.0, -1.0, 1.0);
                     } else {
                         // (c2 & 0x08) == 0
-                        contribute(1.0, 1.0, 1.0, -1.0);
+                        value += contribute(1.0, 1.0, 1.0, -1.0);
                     }
                 } else {
                     // Both closest points on the smaller side
                     // One of the two extra points is (1, 1, 1, 1)
-                    contribute(1.0, 1.0, 1.0, 1.0);
+                    value += contribute(1.0, 1.0, 1.0, 1.0);
 
                     // Other two points are based on the shared axes.
                     let closest = a_point & b_point;
                     if closest == 3 {
-                        contribute(2.0, 1.0, 0.0, 0.0);
-                        contribute(1.0, 2.0, 0.0, 0.0);
+                        value += contribute(2.0, 1.0, 0.0, 0.0);
+                        value += contribute(1.0, 2.0, 0.0, 0.0);
                     } else if closest == 5 {
-                        contribute(2.0, 0.0, 1.0, 0.0);
-                        contribute(1.0, 0.0, 2.0, 0.0);
+                        value += contribute(2.0, 0.0, 1.0, 0.0);
+                        value += contribute(1.0, 0.0, 2.0, 0.0);
                     } else if closest == 6 {
-                        contribute(0.0, 2.0, 1.0, 0.0);
-                        contribute(0.0, 1.0, 2.0, 0.0);
+                        value += contribute(0.0, 2.0, 1.0, 0.0);
+                        value += contribute(0.0, 1.0, 2.0, 0.0);
                     } else if closest == 9 {
-                        contribute(2.0, 0.0, 0.0, 1.0);
-                        contribute(1.0, 0.0, 0.0, 2.0);
+                        value += contribute(2.0, 0.0, 0.0, 1.0);
+                        value += contribute(1.0, 0.0, 0.0, 2.0);
                     } else if closest == 10 {
-                        contribute(0.0, 2.0, 0.0, 1.0);
-                        contribute(0.0, 1.0, 0.0, 2.0);
+                        value += contribute(0.0, 2.0, 0.0, 1.0);
+                        value += contribute(0.0, 1.0, 0.0, 2.0);
                     } else {
                         // closest == 12
-                        contribute(0.0, 0.0, 2.0, 1.0);
-                        contribute(0.0, 0.0, 1.0, 2.0);
+                        value += contribute(0.0, 0.0, 2.0, 1.0);
+                        value += contribute(0.0, 0.0, 1.0, 2.0);
                     }
                 }
             } else {
@@ -660,48 +660,48 @@ impl OpenSimplexNoise4D {
 
                 // Two contributions are the bigger-sided point with each 1 replaced with 2.
                 if c1 == 3 {
-                    contribute(2.0, 1.0, 0.0, 0.0);
-                    contribute(1.0, 2.0, 0.0, 0.0);
+                    value += contribute(2.0, 1.0, 0.0, 0.0);
+                    value += contribute(1.0, 2.0, 0.0, 0.0);
                 } else if c1 == 5 {
-                    contribute(2.0, 0.0, 1.0, 0.0);
-                    contribute(1.0, 0.0, 2.0, 0.0);
+                    value += contribute(2.0, 0.0, 1.0, 0.0);
+                    value += contribute(1.0, 0.0, 2.0, 0.0);
                 } else if c1 == 6 {
-                    contribute(0.0, 2.0, 1.0, 0.0);
-                    contribute(0.0, 1.0, 2.0, 0.0);
+                    value += contribute(0.0, 2.0, 1.0, 0.0);
+                    value += contribute(0.0, 1.0, 2.0, 0.0);
                 } else if c1 == 9 {
-                    contribute(2.0, 0.0, 0.0, 1.0);
-                    contribute(1.0, 0.0, 0.0, 2.0);
+                    value += contribute(2.0, 0.0, 0.0, 1.0);
+                    value += contribute(1.0, 0.0, 0.0, 2.0);
                 } else if c1 == 10 {
-                    contribute(0.0, 2.0, 0.0, 1.0);
-                    contribute(0.0, 1.0, 0.0, 2.0);
+                    value += contribute(0.0, 2.0, 0.0, 1.0);
+                    value += contribute(0.0, 1.0, 0.0, 2.0);
                 } else if c1 == 12 {
-                    contribute(0.0, 0.0, 2.0, 1.0);
-                    contribute(0.0, 0.0, 1.0, 2.0);
+                    value += contribute(0.0, 0.0, 2.0, 1.0);
+                    value += contribute(0.0, 0.0, 1.0, 2.0);
                 }
 
                 // One contribution is a permutation of (1, 1, 1, -1) based on the smaller-sided point
                 if c2 == 7 {
-                    contribute(1.0, 1.0, 1.0, -1.0);
+                    value += contribute(1.0, 1.0, 1.0, -1.0);
                 } else if c2 == 11 {
-                    contribute(1.0, 1.0, -1.0, 1.0);
+                    value += contribute(1.0, 1.0, -1.0, 1.0);
                 } else if c2 == 13 {
-                    contribute(1.0, -1.0, 1.0, 1.0);
+                    value += contribute(1.0, -1.0, 1.0, 1.0);
                 } else {
                     // c2 == 14
-                    contribute(-1.0, 1.0, 1.0, 1.0);
+                    value += contribute(-1.0, 1.0, 1.0, 1.0);
                 }
             }
 
-            contribute(1.0, 1.0, 1.0, 0.0);
-            contribute(1.0, 1.0, 0.0, 1.0);
-            contribute(1.0, 0.0, 1.0, 1.0);
-            contribute(0.0, 1.0, 1.0, 1.0);
-            contribute(1.0, 1.0, 0.0, 0.0);
-            contribute(1.0, 0.0, 1.0, 0.0);
-            contribute(1.0, 0.0, 0.0, 1.0);
-            contribute(0.0, 1.0, 1.0, 0.0);
-            contribute(0.0, 1.0, 0.0, 1.0);
-            contribute(0.0, 0.0, 1.0, 1.0);
+            value += contribute(1.0, 1.0, 1.0, 0.0);
+            value += contribute(1.0, 1.0, 0.0, 1.0);
+            value += contribute(1.0, 0.0, 1.0, 1.0);
+            value += contribute(0.0, 1.0, 1.0, 1.0);
+            value += contribute(1.0, 1.0, 0.0, 0.0);
+            value += contribute(1.0, 0.0, 1.0, 0.0);
+            value += contribute(1.0, 0.0, 0.0, 1.0);
+            value += contribute(0.0, 1.0, 1.0, 0.0);
+            value += contribute(0.0, 1.0, 0.0, 1.0);
+            value += contribute(0.0, 0.0, 1.0, 1.0);
         }
 
         value / NORMALIZING_SCALAR
