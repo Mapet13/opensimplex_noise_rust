@@ -1,11 +1,13 @@
 mod open_simplex_noise_2d;
 mod open_simplex_noise_3d;
+mod open_simplex_noise_4d;
 mod utils;
 mod vector;
 
 use open_simplex_noise_2d::OpenSimplexNoise2D;
 use open_simplex_noise_3d::OpenSimplexNoise3D;
-use vector::{vec2::Vec2, vec3::Vec3};
+use open_simplex_noise_4d::OpenSimplexNoise4D;
+use vector::{vec2::Vec2, vec3::Vec3, vec4::Vec4};
 
 pub const PSIZE: i64 = 2048;
 const DEFAULT_SEED: i64 = 0;
@@ -34,6 +36,10 @@ impl OpenSimplexNoise {
 
     pub fn eval_3d(&self, x: f64, y: f64, z: f64) -> f64 {
         OpenSimplexNoise3D::eval(Vec3::new(x, y, z), &self.perm)
+    }
+
+    pub fn eval_4d(&self, x: f64, y: f64, z: f64, w: f64) -> f64 {
+        OpenSimplexNoise4D::eval(Vec4::new(x, y, z, w), &self.perm)
     }
 }
 
