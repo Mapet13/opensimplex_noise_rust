@@ -8,7 +8,7 @@ const SQUISH: f64 = 1.0 / 3.0; // (sqrt(3 + 1) - 1) / 3
 
 const NORMALIZING_SCALAR: f64 = 103.0;
 
-const GRAD_TABLE_2D: [Vec3<f64>; 24] = [
+const GRAD_TABLE: [Vec3<f64>; 24] = [
     Vec3::new(-11.0, 4.0, 4.0),
     Vec3::new(-4.0, 11.0, 4.0),
     Vec3::new(-4.0, 4.0, 11.0),
@@ -42,7 +42,7 @@ impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
     const SQUISH_POINT: Vec3<f64> = Vec3::new(SQUISH, SQUISH, SQUISH);
 
     fn extrapolate(grid: Vec3<f64>, delta: Vec3<f64>, perm: &PermTable) -> f64 {
-        let point = GRAD_TABLE_2D[OpenSimplexNoise3D::get_grad_table_index(grid, perm)];
+        let point = GRAD_TABLE[OpenSimplexNoise3D::get_grad_table_index(grid, perm)];
 
         point.x * delta.x + point.y * delta.y + point.z * delta.z
     }
@@ -339,6 +339,6 @@ impl OpenSimplexNoise3D {
     fn get_grad_table_index(grid: Vec3<f64>, perm: &PermTable) -> usize {
         let index0 = ((perm[(grid.x as i64 & 0xFF) as usize] + grid.y as i64) & 0xFF) as usize;
         let index1 = ((perm[index0] + grid.z as i64) & 0xFF) as usize;
-        perm[index1] as usize % GRAD_TABLE_2D.len()
+        perm[index1] as usize % GRAD_TABLE.len()
     }
 }

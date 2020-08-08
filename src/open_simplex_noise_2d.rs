@@ -8,7 +8,7 @@ const SQUISH: f64 = 0.366_025_403_784_439; // (sqrt(2 + 1) - 1) / 2
 
 const NORMALIZING_SCALAR: f64 = 47.0;
 
-const GRAD_TABLE_2D: [Vec2<f64>; 8] = [
+const GRAD_TABLE: [Vec2<f64>; 8] = [
     Vec2::new(5.0, 2.0),
     Vec2::new(2.0, 5.0),
     Vec2::new(-5.0, 2.0),
@@ -26,7 +26,7 @@ impl NoiseEvaluator<Vec2<f64>> for OpenSimplexNoise2D {
     const SQUISH_POINT: Vec2<f64> = Vec2::new(SQUISH, SQUISH);
 
     fn extrapolate(grid: Vec2<f64>, delta: Vec2<f64>, perm: &PermTable) -> f64 {
-        let point = GRAD_TABLE_2D[OpenSimplexNoise2D::get_grad_table_index(grid, perm)];
+        let point = GRAD_TABLE[OpenSimplexNoise2D::get_grad_table_index(grid, perm)];
         point.x * delta.x + point.y * delta.y
     }
 
