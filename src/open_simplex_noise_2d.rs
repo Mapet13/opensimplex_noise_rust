@@ -26,7 +26,7 @@ impl NoiseEvaluator<Vec2<f64>> for OpenSimplexNoise2D {
     const SQUISH_POINT: Vec2<f64> = Vec2::new(SQUISH, SQUISH);
 
     fn extrapolate(grid: Vec2<f64>, delta: Vec2<f64>, perm: &PermTable) -> f64 {
-        let point = GRAD_TABLE[OpenSimplexNoise2D::get_grad_table_index(grid, perm)];
+        let point = GRAD_TABLE[Self::get_grad_table_index(grid, perm)];
         point.x * delta.x + point.y * delta.y
     }
 
@@ -50,7 +50,7 @@ impl OpenSimplexNoise2D {
 
         let value = contribute(1.0, 0.0)
             + contribute(0.0, 1.0)
-            + OpenSimplexNoise2D::evaluate_inside_triangle(ins, contribute);
+            + Self::evaluate_inside_triangle(ins, contribute);
 
         value / NORMALIZING_SCALAR
     }
@@ -61,7 +61,7 @@ impl OpenSimplexNoise2D {
             x if x <= 1.0 => Vec2::new(0.0, 0.0),
             _ => Vec2::new(1.0, 1.0),
         };
-        OpenSimplexNoise2D::evaluate_inside_triangle_at(factor_point, in_sum, ins, contribute)
+        Self::evaluate_inside_triangle_at(factor_point, in_sum, ins, contribute)
     }
 
     fn evaluate_inside_triangle_at(

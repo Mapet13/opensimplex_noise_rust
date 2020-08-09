@@ -42,20 +42,20 @@ impl NoiseEvaluator<Vec3<f64>> for OpenSimplexNoise3D {
     const SQUISH_POINT: Vec3<f64> = Vec3::new(SQUISH, SQUISH, SQUISH);
 
     fn extrapolate(grid: Vec3<f64>, delta: Vec3<f64>, perm: &PermTable) -> f64 {
-        let point = GRAD_TABLE[OpenSimplexNoise3D::get_grad_table_index(grid, perm)];
+        let point = GRAD_TABLE[Self::get_grad_table_index(grid, perm)];
 
         point.x * delta.x + point.y * delta.y + point.z * delta.z
     }
 
     fn eval(input: Vec3<f64>, perm: &PermTable) -> f64 {
-        let stretch: Vec3<f64> = input + (OpenSimplexNoise3D::STRETCH_POINT * input.sum());
+        let stretch: Vec3<f64> = input + (Self::STRETCH_POINT * input.sum());
         let grid = stretch.map(utils::floor).map(utils::to_f64);
 
-        let squashed: Vec3<f64> = grid + (OpenSimplexNoise3D::SQUISH_POINT * grid.sum());
+        let squashed: Vec3<f64> = grid + (Self::SQUISH_POINT * grid.sum());
         let ins = stretch - grid;
         let origin = input - squashed;
 
-        OpenSimplexNoise3D::get_value(grid, origin, ins, perm)
+        Self::get_value(grid, origin, ins, perm)
     }
 }
 
@@ -74,15 +74,15 @@ impl OpenSimplexNoise3D {
         let value = match ins.sum() {
             in_sum if in_sum <= 1.0 => {
                 // Inside the tetrahedron (3-Simplex) at (0, 0, 0)
-                OpenSimplexNoise3D::inside_tetrahedron_at_0_0_0(ins, in_sum, contribute)
+                Self::inside_tetrahedron_at_0_0_0(ins, in_sum, contribute)
             }
             in_sum if in_sum >= 2.0 => {
                 // Inside the tetrahedron (3-Simplex) at (1, 1, 1)
-                OpenSimplexNoise3D::inside_tetrahedron_at_1_1_1(ins, in_sum, contribute)
+                Self::inside_tetrahedron_at_1_1_1(ins, in_sum, contribute)
             }
             _ => {
                 // Inside the octahedron (Rectified 3-Simplex) in between.
-                OpenSimplexNoise3D::inside_octahedron_in_between(ins, contribute)
+                Self::inside_octahedron_in_between(ins, contribute)
             }
         };
 
@@ -95,7 +95,7 @@ impl OpenSimplexNoise3D {
         contribute: impl Fn(f64, f64, f64) -> f64,
     ) -> f64 {
         // Determine which two of (0, 0, 1), (0, 1, 0), (1, 0, 0) are closest.
-        let (score, point) = OpenSimplexNoise3D::determine_closest_point(
+        let (score, point) = Self::determine_closest_point(
             Vec2::new(ins.x, ins.y),
             Vec2::new(1, 2),
             Vec2::new(4, 4),
@@ -104,7 +104,7 @@ impl OpenSimplexNoise3D {
 
         // Now we determine the two lattice points not part of the tetrahedron that may contribute.
         // This depends on the closest two tetrahedral vertices, including (0, 0, 0)
-        let value = OpenSimplexNoise3D::determine_lattice_points_including_0_0_0(
+        let value = Self::determine_lattice_points_including_0_0_0(
             in_sum,
             score,
             point,
@@ -124,7 +124,7 @@ impl OpenSimplexNoise3D {
         contribute: impl Fn(f64, f64, f64) -> f64,
     ) -> f64 {
         // Determine which two tetrahedral vertices are the closest, out of (1, 1, 0), (1, 0, 1), (0, 1, 1) but not (1, 1, 1).
-        let (score, point) = OpenSimplexNoise3D::determine_closest_point(
+        let (score, point) = Self::determine_closest_point(
             Vec2::new(ins.x, ins.y),
             Vec2::new(6, 5),
             Vec2::new(3, 3),
@@ -133,7 +133,7 @@ impl OpenSimplexNoise3D {
 
         // Now we determine the two lattice points not part of the tetrahedron that may contribute.
         // This depends on the closest two tetrahedral vertices, including (1, 1, 1)
-        let value = OpenSimplexNoise3D::determine_lattice_points_including_1_1_1(
+        let value = Self::determine_lattice_points_including_1_1_1(
             in_sum,
             score,
             point,
@@ -151,7 +151,7 @@ impl OpenSimplexNoise3D {
         ins: Vec3<f64>,
         contribute: impl Fn(f64, f64, f64) -> f64,
     ) -> f64 {
-        let (is_further_side, point) = OpenSimplexNoise3D::determine_further_side(ins);
+        let (is_further_side, point) = Self::determine_further_side(ins);
 
         // Where each of the two closest points are determines how the extra two vertices are calculated.
         let value = if is_further_side.x == is_further_side.y {
@@ -232,7 +232,7 @@ impl OpenSimplexNoise3D {
 
     fn determine_further_side(ins: Vec3<f64>) -> (Vec2<bool>, Vec2<i32>) {
         let (score, mut point, mut is_further_side) =
-            OpenSimplexNoise3D::decide_between_points(ins);
+        Self::decide_between_points(ins);
 
         // The closest out of the two (1, 0, 0) and (0, 1, 1) will replace
         // the furthest out of the two decided above, if closer.
