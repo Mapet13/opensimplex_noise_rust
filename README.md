@@ -1,4 +1,4 @@
-# OpenSimplex noise in rust [![Crates.io][cr-badge]][cr]
+# OpenSimplex noise in rust [![Crates.io][cr-badge]][cr] [![Build Status](https://travis-ci.com/Mapet13/opensimplex_noise_rust.svg?branch=master)](https://travis-ci.com/Mapet13/opensimplex_noise_rust)
 [cr-badge]: https://img.shields.io/crates/v/opensimplex_noise_rs.svg
 [cr]: https://crates.io/crates/opensimplex_noise_rs
 [OpenSimplex noise](https://en.wikipedia.org/wiki/OpenSimplex_noise) is a random noise [algorithm by Kurt Spencer](https://uniblock.tumblr.com/post/97868843242/noise), made as a patent-free alternative to Perlin and Simplex noise.
