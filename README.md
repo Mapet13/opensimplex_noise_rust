@@ -21,7 +21,7 @@ let value = noise_generator.eval_2d(x * scale, y * scale); // generates value in
 opensimplex_noise_rs = "0.3.0"
 ```
 ### Code Examples:
- - [2D Demo](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo/)
+ - [2D Demo](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo_2d)
  - [3D Demo](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo_3d)
  - [4D Demo](https://github.com/Mapet13/opensimplex_noise_rust/tree/master/examples/demo_4d)
  - [Island Terrain Generator](https://github.com/Mapet13/terrain-generator-2d)
